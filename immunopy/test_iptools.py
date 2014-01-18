@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Created on 18 янв. 2014 г.
+Created on 18 Jan. 2014 г.
 
 @author: radioxoma
 """

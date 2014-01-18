@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Created on 16 янв. 2014 г.
+Created on 16 Jan. 2014 г.
 
 @author: radioxoma
 """
@@ -11,7 +11,6 @@ import numpy as np
 from scipy import ndimage
 from skimage.exposure import histogram
 from skimage.morphology import watershed
-from skimage.feature import peak_local_max
 import cv2
 
 
@@ -189,8 +188,16 @@ def threshold_isodata(image, nbins=256):
     return threshold
 
 
-def segmentation():
-    pass
+def watershed_segmentation(mask, edt, local_maxi):
+    """Segment clumped nuclei.
+    
+    Something like Malpica N, de Solorzano CO, Vaquero JJ, Santos et all
+    'Applying watershed algorithms to the segmentation of clustered nuclei.'
+    Cytometry 28, 289-297 (1997).
+    """
+    markers, num_markers = ndimage.label(local_maxi)
+    labels = watershed(-edt, markers, mask=mask)
+    return labels, num_markers
 
 
 def filter_objects(labels, num=None, min_size=150, max_size=2000, in_place=False):
