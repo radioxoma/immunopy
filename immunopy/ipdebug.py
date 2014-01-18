@@ -10,7 +10,6 @@ import numpy as np
 from scipy import ndimage
 import cv2
 
-from skimage.color import separate_stains, hdx_from_rgb
 # from skimage.exposure import rescale_intensity
 
 import matplotlib.pyplot as plt
@@ -53,32 +52,5 @@ def cvshow(img):
     cv2.destroyAllWindows()
 
 
-
-def process_dab(dab):
-    to8bit = cv2.normalize(dab, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-    meaned = cv2.boxFilter(to8bit, -1, (2,2)) # I hope this is right filter box size
-    fgmask = cv2.threshold(meaned, thresh=0, maxval=255, type=cv2.THRESH_OTSU)[1]
-    medmask = cv2.medianBlur(fgmask, 5) # Exactly!
-    # Make opening to remove small particles?
-    return medmask
-
-
 if __name__ == '__main__':
-    bgr = cv2.imread('clipboard/Clipboard.tif')
-    rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
-    rgbscaled = resize(rgb, um_perpx=2.0)
-    # Коррекция освещённости
-    # Разделение красителей
-    hdx = separate_stains(rgbscaled, hdx_from_rgb) # Отрицательные значения!
-    _hem = hdx[:,:,0]
-    _dab = hdx[:,:,1]
-    _xna = hdx[:,:,2]
-    ############################################################################
-
-    mask = process_dab(_hem)
-    labels = imagej_watershed(mask)
-    obj = process_particles(labels, mask)
-    objmask = draw_masks(rgb, obj)
-#     show(objmask)
-    plt.imshow(labels, cmap='flag')
-    plt.show()
+    pass

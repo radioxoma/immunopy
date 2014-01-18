@@ -16,15 +16,24 @@ import cv2
 
 
 class CalibMicro(object):
-    """Microscope objective calibration and size conversion."""
-    def __init__(self):
+    """Microscope objective calibration and size conversion.
+    
+    Instance it with default objective scale as parameter.
+    """
+    
+    def __init__(self, scale):
+        """Objective scales (um/px) from Leica Acquisition Suite *.cal.xml
+        for Leica DMI 2000 optical microscope
+        """
         super(CalibMicro, self).__init__()
-
-        # um/px # scale per objective
-        self.scales = {'10': 0.2, '20': 0.1}
-        self.cur_scale = '10'  # objname
-        self.roi = (2048, 1536)
-        self.binning = 1, 2  # Не уверен, что этот параметр нужен.
+        self.scales = {'5': 9.1428482142944335E-01,
+                       '10': 4.5714241071472167E-01,
+                       '20': 2.2857120535736084E-01,
+                       '63': 7.2562287415035193E-02}
+        self.cur_scale = None
+        self.set_curr_scale(scale)  # objective name
+#         self.roi = (2048, 1536)
+#         self.binning = 1, 2  # Не уверен, что этот параметр нужен.
 
     def um2px(self, um, scale=None):
         """Convert um to pixel line."""
@@ -42,9 +51,10 @@ class CalibMicro(object):
         """Диаметр (um) в площадь эквивалентного квадрата в px."""
         return self.um2px(diameter) ** 2
     
-    # def choose_curr_scale(self):
-    #     """from avaliable:"""
-    #     pass
+    def set_curr_scale(self, scale):
+        """Set microscope scale from available."""
+        assert(isinstance(scale, str))
+        self.cur_scale = self.scales[scale]
     
     def get_curr_scale(self):
         return self.cur_scale
@@ -63,7 +73,7 @@ class CalibMicro(object):
 
 
 def rgb32asrgb(rgb32):
-    """View RGB32 as RGB (no copy).
+    """View RGB32 as RGB array (no copy).
 
     low memory address    ---->      high memory address
     | pixel | pixel | pixel | pixel | pixel | pixel |...
@@ -101,13 +111,13 @@ def normalize(img):
     return (img - immin) / (img.max() - immin).astype(np.float32)
 
 
-def rescale(source, um_perpx=2.0):
-    """Если um_perpx > 2, то изображение будет уменьшаться.
+def rescale(source, scale):
+    """Если scale > 2 um/px, то изображение будет уменьшаться.
     """
-    if um_perpx == 2.0:  # pixels per um
+    if scale == 2.0:  # pixels per um
         return source
     else:
-        scl_factor = 2.0 / um_perpx
+        scl_factor = 2.0 / scale
         fy = int(round(source.shape[0] * scl_factor))
         fx = int(round(source.shape[1] * scl_factor))
         # cv2.INTER_CUBIC
@@ -239,24 +249,24 @@ def overlay():
     pass
 
 
-def draw_masks(srcrgb, dab, hem=None):
+def draw_masks(srcrgb, mask):
     """Draw objects on image"""
     """
     Draws on source image with different colors under stains masks.
     
     После завершения работы с выделением DAB и гематоксилина, проверь,
     пересекаются ли эти маски. Это можно сделать, заменяя один канал:
-    np.copyto(bgr[:,:,0], 255, where=dab.view(dtype=np.bool8))
+    np.copyto(bgr[:,:,0], 255, where=mask.view(dtype=np.bool8))
     """
     rgb = srcrgb.copy()
     # Заменяет все пикселы определённым цветом по маске. Маска псевдотрёхмерная.     
     np.copyto(
         rgb, np.array([255,0,0], dtype=np.uint8),
-        where=dab.view(dtype=np.bool8)[:,:,None])
+        where=mask.view(dtype=np.bool8)[:,:,None])
 #     np.copyto(rgb, np.array([0,0,255], dtype=np.uint8), where=hem.view(dtype=np.bool8)[:,:,None])
     
     '''An alternative variant for grayscale stains.
-    np.dstack((rescale_intensity(dab, out_range=(0, 1)), np.zeros_like(dab),
+    np.dstack((rescale_intensity(mask, out_range=(0, 1)), np.zeros_like(mask),
                rescale_intensity(hem, out_range=(0, 1))))
     '''
     return rgb
