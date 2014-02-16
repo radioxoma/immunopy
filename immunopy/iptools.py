@@ -123,7 +123,7 @@ def rescale(source, scale):
         return cv2.resize(source, dsize=(fx, fy), interpolation=cv2.INTER_LINEAR)
 
 
-def threshold_isodata(image, nbins=256):
+def threshold_isodata(image, nbins=256, shift=None):
     """Return threshold value based on ISODATA method.
 
     Histogram-based threshold, known as Ridler-Calvard method or intermeans.
@@ -135,6 +135,8 @@ def threshold_isodata(image, nbins=256):
     nbins : int, optional
         Number of bins used to calculate histogram. This value is ignored for
         integer arrays.
+    shift : int, optional
+        Shift threshold value by percent up/down.
 
     Returns
     -------
@@ -185,6 +187,9 @@ def threshold_isodata(image, nbins=256):
     threshold = bin_centers[np.nonzero(allmean.round() == binnums)[0][0]]
     # This implementation returns threshold where
     # `background <= threshold < foreground`.
+    
+    if shift:
+        threshold += (bin_centers[-1] - bin_centers[0]) * shift / 100.
     return threshold
 
 
