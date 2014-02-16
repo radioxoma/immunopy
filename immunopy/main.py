@@ -14,7 +14,6 @@ from skimage.color import separate_stains, hdx_from_rgb
 from skimage.feature import peak_local_max
 import iptools 
 from ipdebug import show
-from apsw import main
 
 
 MAGNIFICATION = '20'
@@ -22,7 +21,7 @@ BLUR = 2
 
 THRESHOLD_SHIFT = 8
 PEAK_DISTANCE = 8
-MIN_SIZE = 150  # Still no trackbar 
+MIN_SIZE = 150
 MAX_SIZE = 2000
 
 
@@ -90,11 +89,14 @@ def main(image):
     dabfiltered, dabfnum = iptools.filter_objects(dablabels, num=dablnum, min_size=MIN_SIZE, max_size=MAX_SIZE)
     
     stats = 'H%d, D%d, %f' % (hemfnum, dabfnum, float(dabfnum) / (hemfnum + dabfnum + 0.001))
- 
+    stats2 = '%.2f %%' % (iptools.calc_stats(hemfiltered, dabfiltered) * 100)
+
 #     show(dablabels)
 #     show(dabfiltered)
 
     cv2.putText(rgb, stats, (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=255, thickness=2)
+    cv2.putText(rgb, stats2, (2,60), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=255, thickness=2)
+    
     cv2.imshow('Video', rgb[...,::-1])
     cv2.imshow('hemfiltered', hemfiltered.astype(np.float32))
     cv2.imshow('dabfiltered', dabfiltered.astype(np.float32))

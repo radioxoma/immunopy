@@ -296,13 +296,14 @@ def draw_histogram():
     pass
 
 
-def calc_stats():
-    """
+def calc_stats(hemlabels, dablabels):
+    """Return area fraction.
     выдавать статистику по labels (хотя бы размеры)
     размеры подсчитаны в функции фильтрации
     """
-    pass
-
+    hemarea = np.count_nonzero(hemlabels)
+    dabarea = np.count_nonzero(dablabels)
+    return float(dabarea) / (dabarea + hemarea)
 
 def autofocus():
     """help find focus position
