@@ -12,6 +12,8 @@ from scipy import ndimage
 import cv2
 from skimage.color import separate_stains, hdx_from_rgb
 from skimage.feature import peak_local_max
+import MMCorePy
+
 import iptools 
 from ipdebug import show
 
@@ -23,6 +25,18 @@ THRESHOLD_SHIFT = 8
 PEAK_DISTANCE = 8
 MIN_SIZE = 150
 MAX_SIZE = 2000
+
+
+DEVICE = ['Camera', 'DemoCamera', 'DCam']
+# DEVICE = ['Camera', 'OpenCVgrabber', 'OpenCVgrabber']
+# DEVICE = ['Camera', "BaumerOptronic", "BaumerOptronic"]
+
+mmc = MMCorePy.CMMCore()
+mmc.enableStderrLog(False)
+mmc.loadDevice(*DEVICE)
+mmc.initializeDevice(DEVICE[0])
+mmc.setCameraDevice(DEVICE[0])
+mmc.setProperty(DEVICE[0], 'PixelType', '32bitRGB')
 
 
 def set_threshold_shift(value):
@@ -114,7 +128,12 @@ if __name__ == '__main__':
     cv2.createTrackbar('MAX_SIZE', 'Controls', 2000, 5000, set_max_size)
     cv2.createTrackbar('MIN_SIZE', 'Controls', 150, 5000, set_min_size)
 
+#     mmc.startContinuousSequenceAcquisition(1)
     while True:
+        rgb32 = mmc.getLastImage()
+        if rgb32 is not None:
+            # Efficient conversion without data copying.
+            rgb = iptools.rgb32asrgb(rgb32)
         main(rgb)
         if cv2.waitKey(30) >= 0:
             break
