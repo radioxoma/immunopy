@@ -20,6 +20,7 @@ class CMMCore(object):
     def __init__(self):
         super(CMMCore, self).__init__()
         self.RGB = ndimage.imread('image/hdab256.tif')
+#         self.RGB = ndimage.imread('image/Ki6720x_blue_filter.tif')
 #         self.RGB = ndimage.imread('image/2px_um.tif')
         self.BGR = cv2.cvtColor(self.RGB, cv2.COLOR_RGB2BGR)
         self.BGRA = np.dstack((self.BGR, np.zeros((self.BGR.shape[0], self.BGR.shape[1]), dtype=np.uint8)))

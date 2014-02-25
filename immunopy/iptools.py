@@ -303,7 +303,11 @@ def calc_stats(hemlabels, dablabels):
     """
     hemarea = np.count_nonzero(hemlabels)
     dabarea = np.count_nonzero(dablabels)
-    return float(dabarea) / (dabarea + hemarea)
+    dabhem = dabarea + hemarea
+    if dabhem == 0:
+        return 0
+    else:
+        return float(dabarea) / dabhem
 
 def autofocus():
     """help find focus position

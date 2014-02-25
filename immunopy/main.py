@@ -99,7 +99,7 @@ def main(image):
     hemfiltered, hemfnum = iptools.filter_objects(hemlabels, num=hemlnum, min_size=MIN_SIZE, max_size=MAX_SIZE)
     dabfiltered, dabfnum = iptools.filter_objects(dablabels, num=dablnum, min_size=MIN_SIZE, max_size=MAX_SIZE)
     
-    stats = 'H%d, D%d, %f' % (hemfnum, dabfnum, float(dabfnum) / (hemfnum + dabfnum + 0.001))
+    stats = 'H%d, D%d, %.2f' % (hemfnum, dabfnum, float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100)
     stats2 = '%.2f %%' % (iptools.calc_stats(hemfiltered, dabfiltered) * 100)
 
     cv2.putText(rgb, stats, (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=255, thickness=2)
