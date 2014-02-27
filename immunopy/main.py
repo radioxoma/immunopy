@@ -19,9 +19,8 @@ from ipdebug import show
 
 
 MAGNIFICATION = '20'
-SCALE = 2
-BLUR = 2
 
+BLUR = 2
 THRESHOLD_SHIFT = 8
 PEAK_DISTANCE = 8
 MIN_SIZE = 150
@@ -114,6 +113,11 @@ def main(image):
 
 
 if __name__ == '__main__':
+    CMicro = iptools.CalibMicro(MAGNIFICATION)
+    SCALE = 2 # CMicro.um2px(1) # Uncomment while deploy
+    print('curscale %f') % CMicro.get_curr_scale()
+    print('um2px %f') % SCALE
+    
     mmc = MMCorePy.CMMCore()
     print('ImageBufferSize %f' % mmc.getImageBufferSize())  # Returns the size of the internal image buffer.
     print('BufferTotalCapacity %f' % mmc.getBufferTotalCapacity())
