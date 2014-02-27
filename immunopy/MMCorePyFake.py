@@ -35,6 +35,8 @@ class CMMCore(object):
         print("Device camera '%s' initialized" % devname)
     def setProperty(self, *props):
         print("Props '%s' setted" % ', '.join([str(k) for k in props]))
+    def setCircularBufferMemoryFootprint(self, value):
+        pass
     def enableStderrLog(self, bool_):
         pass
     def getBufferTotalCapacity(self):
@@ -42,7 +44,7 @@ class CMMCore(object):
     def getImageBufferSize(self):
         return 0.
     def getLastImage(self):
-        print('Last frame incoming!')
+#         print('Last frame incoming!')
         return self.RGB32
     def stopSequenceAcquisition(self):
         pass

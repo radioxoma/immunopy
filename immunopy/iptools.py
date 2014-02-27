@@ -16,10 +16,10 @@ import cv2
 
 class CalibMicro(object):
     """Microscope objective calibration and size conversion.
-    
+
     Instance it with default objective scale as parameter.
     """
-    
+
     def __init__(self, scale):
         """Objective scales (um/px) from Leica Acquisition Suite *.cal.xml
         for Leica DMI 2000 optical microscope
@@ -41,26 +41,26 @@ class CalibMicro(object):
     def px2um(self, um, scale=None):
         """Convert pixel line to um."""
         return um * self.cur_scale
-    
+
     def um2circle(self, diameter):
         """Диаметр (um) в площадь эквивалентного круга в px."""
         return np.pi * (self.um2px(diameter) / 2.0) ** 2
-    
+
     def um2rect(self, diameter):
         """Диаметр (um) в площадь эквивалентного квадрата в px."""
         return self.um2px(diameter) ** 2
-    
+
     def set_curr_scale(self, scale):
         """Set microscope scale from available."""
         assert(isinstance(scale, str))
         self.cur_scale = self.scales[scale]
-    
+
     def get_curr_scale(self):
         return self.cur_scale
-    
+
     # def set_all_scales(self):
     #     pass
-    
+
     # def get_all_scales(self):
     #     pass
 
@@ -187,7 +187,7 @@ def threshold_isodata(image, nbins=256, shift=None):
     threshold = bin_centers[np.nonzero(allmean.round() == binnums)[0][0]]
     # This implementation returns threshold where
     # `background <= threshold < foreground`.
-    
+
     if shift:
         threshold += (bin_centers[-1] - bin_centers[0]) * shift / 100.
     return threshold
@@ -195,7 +195,7 @@ def threshold_isodata(image, nbins=256, shift=None):
 
 def watershed_segmentation(mask, edt, local_maxi):
     """Segment clumped nuclei.
-    
+
     Something like Malpica N, de Solorzano CO, Vaquero JJ, Santos et all
     'Applying watershed algorithms to the segmentation of clustered nuclei.'
     Cytometry 28, 289-297 (1997).
@@ -207,10 +207,10 @@ def watershed_segmentation(mask, edt, local_maxi):
 
 def filter_objects(labels, num=None, min_size=150, max_size=2000, in_place=False):
     """Remove too small or too big objects from array.
-    
+
     labels: array labels given by ndimage.label function.
     num: int Total number of labels given by ndimage.label function.
-    
+
     return: filtered_array, number_of_objects on this array
     """
     if num is None:
@@ -234,9 +234,9 @@ def filter_objects(labels, num=None, min_size=150, max_size=2000, in_place=False
 
 def circularity(arr):
     """Оценить, насколько массив на входе близок к окружности.
-    
+
     Функция нацелена на производительность. Никаких bounding box.
-    
+
     0.6-1.1 окружность.
     <1 - маленький изогнутый фрагмент, не окружность.
     >1 - скорее четырёхугольник, чем круг. Например полностью залитый квадрат.
@@ -245,7 +245,7 @@ def circularity(arr):
     # CellProfiler / cellprofiler / modules / measureobjectsizeshape.py
     # FormFactor: Calculated as 4*π*Area / Perimeter^2.
     # Equals 1 for a perfectly circular object.
-    
+
     Roundness – (Perimeter^2) / 4 * PI * Area).
     This gives the reciprocal value of Shape Factor for those that are used to using it.
     A circle will have a value slightly greater than or equal to 1.
@@ -265,18 +265,18 @@ def draw_masks(srcrgb, mask):
     """Draw objects on image"""
     """
     Draws on source image with different colors under stains masks.
-    
+
     После завершения работы с выделением DAB и гематоксилина, проверь,
     пересекаются ли эти маски. Это можно сделать, заменяя один канал:
     np.copyto(bgr[:,:,0], 255, where=mask.view(dtype=np.bool8))
     """
     rgb = srcrgb.copy()
-    # Заменяет все пикселы определённым цветом по маске. Маска псевдотрёхмерная.     
+    # Заменяет все пикселы определённым цветом по маске. Маска псевдотрёхмерная.
     np.copyto(
         rgb, np.array([255,0,0], dtype=np.uint8),
         where=mask.view(dtype=np.bool8)[:,:,None])
 #     np.copyto(rgb, np.array([0,0,255], dtype=np.uint8), where=hem.view(dtype=np.bool8)[:,:,None])
-    
+
     '''An alternative variant for grayscale stains.
     np.dstack((rescale_intensity(mask, out_range=(0, 1)), np.zeros_like(mask),
                rescale_intensity(hem, out_range=(0, 1))))
@@ -288,7 +288,7 @@ def draw_masks(srcrgb, mask):
 #     """Графики."""
 #     def __init__(self):
 #         super(AnalyticsTools, self).__init__()
-    
+
 
 def draw_histogram():
     """RGB, RGB, Log.
@@ -308,6 +308,27 @@ def calc_stats(hemlabels, dablabels):
         return 0
     else:
         return float(dabarea) / dabhem
+
+def calc_stats_binary(hemlabels, dablabels):
+    """DAB / (All area covered with DAB or HEM)
+    
+    Sometimes DAB and HEM areas intersects.
+    """
+    botharea = np.count_nonzero(np.logical_or(hemlabels, dablabels))
+    if botharea == 0:
+        return 0
+    else:
+        return float(np.count_nonzero(dablabels)) / botharea 
+
+def fit_polynominal(percent):
+    """Convert result basing on Immunoratio polynominal.
+    """
+    a = 0.00006442
+    b = -0.001984
+    c = 0.611
+    d = 0.4321
+    return a * percent ** 3 + b * percent ** 2 + c * percent + d
+
 
 def autofocus():
     """help find focus position

@@ -19,17 +19,18 @@ from ipdebug import show
 
 
 MAGNIFICATION = '20'
+SCALE = 2
 BLUR = 2
 
 THRESHOLD_SHIFT = 8
 PEAK_DISTANCE = 8
 MIN_SIZE = 150
-MAX_SIZE = 2000
+MAX_SIZE = 3000
 
 
-DEVICE = ['Camera', 'DemoCamera', 'DCam']
+# DEVICE = ['Camera', 'DemoCamera', 'DCam']
 # DEVICE = ['Camera', 'OpenCVgrabber', 'OpenCVgrabber']
-# DEVICE = ['Camera', "BaumerOptronic", "BaumerOptronic"]
+DEVICE = ['Camera', "BaumerOptronic", "BaumerOptronic"]
 
 
 def set_exposure(value):
@@ -67,7 +68,7 @@ def main(image):
     meaned = cv2.blur(rgb, (BLUR, BLUR))
     
     # Масштаб
-    scaled = iptools.rescale(meaned, scale=2)
+    scaled = iptools.rescale(meaned, scale=SCALE)
     
     # Разделение красителей
     hdx = separate_stains(scaled, hdx_from_rgb) # Отрицательные значения!
@@ -99,14 +100,16 @@ def main(image):
     hemfiltered, hemfnum = iptools.filter_objects(hemlabels, num=hemlnum, min_size=MIN_SIZE, max_size=MAX_SIZE)
     dabfiltered, dabfnum = iptools.filter_objects(dablabels, num=dablnum, min_size=MIN_SIZE, max_size=MAX_SIZE)
     
-    stats = 'H%d, D%d, %.2f' % (hemfnum, dabfnum, float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100)
-    stats2 = '%.2f %%' % (iptools.calc_stats(hemfiltered, dabfiltered) * 100)
+    stats = 'Num H%dD%d, %.2f' % (hemfnum, dabfnum, float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100)
+    stats2 = 'Are %.2f' % (iptools.calc_stats(hemfiltered, dabfiltered) * 100)
+    stats3 = 'ArOR %.2f' % (iptools.calc_stats_binary(hemfiltered, dabfiltered) * 100)
 
-    cv2.putText(rgb, stats, (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=255, thickness=2)
-    cv2.putText(rgb, stats2, (2,60), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=255, thickness=2)
+    cv2.putText(scaled, stats, (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=255, thickness=2)
+    cv2.putText(scaled, stats2, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=255, thickness=2)
+    cv2.putText(scaled, stats3, (2,85), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=255, thickness=2)
     
-    cv2.imshow('Video', rgb[...,::-1])
-    composite_rgb = np.dstack((hemlabels, np.zeros_like(dablabels), dablabels)) # NB! BGR
+    cv2.imshow('Video', scaled[...,::-1])
+    composite_rgb = np.dstack((hemfiltered, np.zeros_like(hemfiltered), dabfiltered)) # NB! BGR
     cv2.imshow('Masks', composite_rgb.astype(np.float32))
 
 
@@ -114,13 +117,14 @@ if __name__ == '__main__':
     mmc = MMCorePy.CMMCore()
     print('ImageBufferSize %f' % mmc.getImageBufferSize())  # Returns the size of the internal image buffer.
     print('BufferTotalCapacity %f' % mmc.getBufferTotalCapacity())
-    # mmc.setCircularBufferMemoryFootprint(200)
-    mmc.enableStderrLog(False)
+    mmc.setCircularBufferMemoryFootprint(200)
+    # mmc.enableStderrLog(False)
     mmc.loadDevice(*DEVICE)
     mmc.initializeDevice(DEVICE[0])
+    # mmc.setProperty(DEVICE[0], 'Binning', '2')
     mmc.setCameraDevice(DEVICE[0])
+    # mmc.setROI(0, 0, 512, 384)
     mmc.setProperty(DEVICE[0], 'PixelType', '32bitRGB')
-    # mmc.setROI(0, 0, 256, 256)
 
     cv2.namedWindow('Video')
     cv2.namedWindow('Masks')
@@ -129,8 +133,8 @@ if __name__ == '__main__':
     cv2.createTrackbar('EXPOSURE', 'Controls', 20, 100, set_exposure)
     cv2.createTrackbar('SHIFT_THRESHOLD', 'Controls', 108, 200, set_threshold_shift)
     cv2.createTrackbar('PEAK_DISTANCE', 'Controls', 8, 100, set_peak_distance)
-    cv2.createTrackbar('MAX_SIZE', 'Controls', 2000, 5000, set_max_size)
-    cv2.createTrackbar('MIN_SIZE', 'Controls', 150, 5000, set_min_size)
+    cv2.createTrackbar('MAX_SIZE', 'Controls', MAX_SIZE, 5000, set_max_size)
+    cv2.createTrackbar('MIN_SIZE', 'Controls', MIN_SIZE, 5000, set_min_size)
 
     mmc.startContinuousSequenceAcquisition(1)
     while True:
