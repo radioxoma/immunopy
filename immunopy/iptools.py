@@ -17,12 +17,16 @@ import cv2
 class CalibMicro(object):
     """Microscope objective calibration and size conversion.
 
-    Instance it with default objective scale as parameter.
+    Instance it with default objective name (e.g. '20').
+
+    TODO:
+        * Use properties
+        * Handle scales as class attributes
     """
 
     def __init__(self, scale):
         """Objective scales (um/px) from Leica Acquisition Suite *.cal.xml
-        for Leica DMI 2000 optical microscope
+        files for Leica DMI 2000 optical microscope.
         """
         super(CalibMicro, self).__init__()
         self.scales = {'5': 9.1428482142944335E-01,
@@ -82,6 +86,28 @@ def rgb32asrgb(rgb32):
     """
     return rgb32.view(dtype=np.uint8).reshape(
         rgb32.shape[0], rgb32.shape[1], 4)[...,2::-1]
+
+
+def get_central_rect(width, height):
+    """Select central rectangle with reduced size.
+
+    From mmstudio.
+    1024  768 (512, 384, 1536, 1152)
+     512  384 (256, 192, 768, 576)
+     256  192 (128, 96, 384, 288)
+     128   96 (64, 48, 192, 144)
+      64   48 (32, 24, 96, 72)
+      32   24 (16, 12, 48, 36)
+      16   12 (8, 6, 24, 18)
+       8    6 (4, 3, 12, 9)
+       4    2 (2, 2, 6, 4)
+    """
+    roi = (
+        width / 2 - width / 4,
+        height / 2 - width / 4,  # height
+        width / 2 + width / 4,
+        height / 2 + height / 4)
+    return roi
 
 
 def get_random_cm():
@@ -277,7 +303,7 @@ def draw_masks(srcrgb, mask):
         where=mask.view(dtype=np.bool8)[:,:,None])
 #     np.copyto(rgb, np.array([0,0,255], dtype=np.uint8), where=hem.view(dtype=np.bool8)[:,:,None])
 
-    '''An alternative variant for grayscale stains.
+    '''An alternative for grayscale stains.
     np.dstack((rescale_intensity(mask, out_range=(0, 1)), np.zeros_like(mask),
                rescale_intensity(hem, out_range=(0, 1))))
     '''
@@ -291,15 +317,17 @@ def draw_masks(srcrgb, mask):
 
 
 def draw_histogram():
-    """RGB, RGB, Log.
+    """RGB, Log.
     Думаю стоит рисовать ее как в Leica - тонкими линиями по каналам."""
     pass
 
 
 def calc_stats(hemlabels, dablabels):
     """Return area fraction.
-    выдавать статистику по labels (хотя бы размеры)
-    размеры подсчитаны в функции фильтрации
+
+    TODO:
+        * выдавать статистику по labels (хотя бы размеры)
+        * размеры подсчитаны в функции фильтрации
     """
     hemarea = np.count_nonzero(hemlabels)
     dabarea = np.count_nonzero(dablabels)
@@ -309,19 +337,21 @@ def calc_stats(hemlabels, dablabels):
     else:
         return float(dabarea) / dabhem
 
+
 def calc_stats_binary(hemlabels, dablabels):
     """DAB / (All area covered with DAB or HEM)
-    
+
     Sometimes DAB and HEM areas intersects.
     """
     botharea = np.count_nonzero(np.logical_or(hemlabels, dablabels))
     if botharea == 0:
         return 0
     else:
-        return float(np.count_nonzero(dablabels)) / botharea 
+        return float(np.count_nonzero(dablabels)) / botharea
+
 
 def fit_polynominal(percent):
-    """Convert result basing on Immunoratio polynominal.
+    """Correct result basing on Immunoratio polynominal.
     """
     a = 0.00006442
     b = -0.001984

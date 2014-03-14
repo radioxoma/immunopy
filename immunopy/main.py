@@ -114,7 +114,7 @@ def main(image):
 
 if __name__ == '__main__':
     CMicro = iptools.CalibMicro(MAGNIFICATION)
-    SCALE = 2 # CMicro.um2px(1) # Uncomment while deploy
+    SCALE = CMicro.um2px(1) # Uncomment while deploy
     print('curscale %f') % CMicro.get_curr_scale()
     print('um2px %f') % SCALE
     
@@ -144,9 +144,7 @@ if __name__ == '__main__':
     while True:
         rgb32 = mmc.getLastImage()
         if rgb32 is not None:
-            # Efficient conversion without data copying.
-            rgb = iptools.rgb32asrgb(rgb32)
-        main(rgb)
+            main(iptools.rgb32asrgb(rgb32))
         if cv2.waitKey(30) >= 0:
             break
     cv2.destroyAllWindows()
