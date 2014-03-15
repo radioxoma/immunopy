@@ -88,25 +88,30 @@ def rgb32asrgb(rgb32):
         rgb32.shape[0], rgb32.shape[1], 4)[...,2::-1]
 
 
-def get_central_rect(width, height):
+def get_central_rect(width, height, divisor=1):
     """Select central rectangle with reduced size.
 
-    From mmstudio.
-    1024  768 (512, 384, 1536, 1152)
-     512  384 (256, 192, 768, 576)
-     256  192 (128, 96, 384, 288)
-     128   96 (64, 48, 192, 144)
-      64   48 (32, 24, 96, 72)
-      32   24 (16, 12, 48, 36)
-      16   12 (8, 6, 24, 18)
-       8    6 (4, 3, 12, 9)
-       4    2 (2, 2, 6, 4)
+    MMstudio-like.
+       1: 2048 1536 (  0,   0, 2048, 1536)
+       2: 1024  768 (512, 384, 1536, 1152)
+       4:  512  384 (768, 576, 1280, 960)
+       8:  256  192 (896, 672, 1152, 864)
+      16:  128   96 (960, 720, 1088, 816)
+      32:   64   48 (992, 744, 1056, 792)
+      64:   32   24 (1008, 756, 1040, 780)
+     128:   16   12 (1016, 762, 1032, 774)
+     256:    8    6 (1020, 765, 1028, 771)
+     512:    4    2 (1022, 767, 1026, 769)
+    1024:    2    0 (1023, 768, 1025, 768)
     """
+    centerx = width / 2
+    centery = height / 2
+    # divisor = 2 ** divisor
     roi = (
-        width / 2 - width / 4,
-        height / 2 - width / 4,  # height
-        width / 2 + width / 4,
-        height / 2 + height / 4)
+        centerx - centerx / divisor,
+        centery - centery / divisor,
+        centerx + centerx / divisor,
+        centery + centery / divisor)
     return roi
 
 
