@@ -7,6 +7,8 @@ Created on 18 Jan. 2014 г.
 @author: radioxoma
 """
 
+import sys
+import time
 import numpy as np
 from scipy import ndimage
 import cv2
@@ -115,18 +117,20 @@ def process(image):
 def main():
     mmc.startContinuousSequenceAcquisition(1)
     while True:
+        start_time = time.time()
         rgb32 = mmc.getLastImage()
         if rgb32 is not None:
             process(iptools.rgb32asrgb(rgb32))
-        if cv2.waitKey(30) >= 0:
+        if cv2.waitKey(5) >= 0:
             break
+        print('FPS: %f') % (1. / (time.time() - start_time))
     mmc.reset()
     cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
     CMicro = iptools.CalibMicro(MAGNIFICATION)
-    SCALE = CMicro.um2px(1) # Uncomment while deploy
+    SCALE = CMicro.um2px(1)
     print('curscale %f') % CMicro.get_curr_scale()
     print('um2px %f') % SCALE
     
@@ -151,4 +155,4 @@ if __name__ == '__main__':
     cv2.createTrackbar('PEAK_DISTANCE', 'Controls', 8, 100, set_peak_distance)
     cv2.createTrackbar('MAX_SIZE', 'Controls', MAX_SIZE, 5000, set_max_size)
     cv2.createTrackbar('MIN_SIZE', 'Controls', MIN_SIZE, 5000, set_min_size)
-    main()
+    sys.exit(main())
