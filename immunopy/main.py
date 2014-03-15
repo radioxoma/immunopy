@@ -29,7 +29,7 @@ MAX_SIZE = 3000
 
 # DEVICE = ['Camera', 'DemoCamera', 'DCam']
 # DEVICE = ['Camera', 'OpenCVgrabber', 'OpenCVgrabber']
-DEVICE = ['Camera', "BaumerOptronic", "BaumerOptronic"]
+DEVICE = ['Camera', 'BaumerOptronic', 'BaumerOptronic']
 
 
 def set_exposure(value):
@@ -59,7 +59,7 @@ def set_min_size(value):
         MIN_SIZE = value
 
 
-def main(image):
+def process(image):
     rgb = image.copy()
     # Коррекция освещённости
     
@@ -73,7 +73,7 @@ def main(image):
     hdx = separate_stains(scaled, hdx_from_rgb) # Отрицательные значения!
     hem = hdx[:,:,0]
     dab = hdx[:,:,1]
-    xna = hdx[:,:,2]
+    # xna = hdx[:,:,2]
     
     # threshold (still no correction)
     hemth = iptools.threshold_isodata(hem, shift=THRESHOLD_SHIFT)
@@ -112,6 +112,18 @@ def main(image):
     cv2.imshow('Masks', composite_rgb.astype(np.float32))
 
 
+def main():
+    mmc.startContinuousSequenceAcquisition(1)
+    while True:
+        rgb32 = mmc.getLastImage()
+        if rgb32 is not None:
+            process(iptools.rgb32asrgb(rgb32))
+        if cv2.waitKey(30) >= 0:
+            break
+    mmc.reset()
+    cv2.destroyAllWindows()
+
+
 if __name__ == '__main__':
     CMicro = iptools.CalibMicro(MAGNIFICATION)
     SCALE = CMicro.um2px(1) # Uncomment while deploy
@@ -139,12 +151,4 @@ if __name__ == '__main__':
     cv2.createTrackbar('PEAK_DISTANCE', 'Controls', 8, 100, set_peak_distance)
     cv2.createTrackbar('MAX_SIZE', 'Controls', MAX_SIZE, 5000, set_max_size)
     cv2.createTrackbar('MIN_SIZE', 'Controls', MIN_SIZE, 5000, set_min_size)
-
-    mmc.startContinuousSequenceAcquisition(1)
-    while True:
-        rgb32 = mmc.getLastImage()
-        if rgb32 is not None:
-            main(iptools.rgb32asrgb(rgb32))
-        if cv2.waitKey(30) >= 0:
-            break
-    cv2.destroyAllWindows()
+    main()

@@ -28,7 +28,8 @@ class CMMCore(object):
     def startContinuousSequenceAcquisition(self, bool_):
         pass
     def loadDevice(self, *device):
-        print("Device '%s' loaded" % ', '.join(device))
+        self.cam = ', '.join(device)
+        print("Device '%s' loaded" % self.cam)
     def initializeDevice(self, devname):
         print("Device '%s' initialized" % devname)
     def setCameraDevice(self, devname):
