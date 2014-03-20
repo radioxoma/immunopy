@@ -38,6 +38,8 @@ class CMMCore(object):
         print("Props '%s' setted" % ', '.join([str(k) for k in props]))
     def setCircularBufferMemoryFootprint(self, value):
         pass
+    def setROI(self, x, y, w, h):
+        print('fake setROI: %d %d %d %d') % (x, y, w, h)
     def enableStderrLog(self, bool_):
         pass
     def getBufferTotalCapacity(self):
@@ -47,6 +49,10 @@ class CMMCore(object):
     def getLastImage(self):
 #         print('Last frame incoming!')
         return self.RGB32
+    def getImageHeight(self):
+        return self.RGB.shape[0]
+    def getImageWidth(self):
+        return self.RGB.shape[1]
     def stopSequenceAcquisition(self):
         pass
     def reset(self):

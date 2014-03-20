@@ -137,13 +137,13 @@ if __name__ == '__main__':
     mmc = MMCorePy.CMMCore()
     print('ImageBufferSize %f' % mmc.getImageBufferSize())  # Returns the size of the internal image buffer.
     print('BufferTotalCapacity %f' % mmc.getBufferTotalCapacity())
-    mmc.setCircularBufferMemoryFootprint(200)
+    mmc.setCircularBufferMemoryFootprint(60)
     # mmc.enableStderrLog(False)
     mmc.loadDevice(*DEVICE)
     mmc.initializeDevice(DEVICE[0])
-    # mmc.setProperty(DEVICE[0], 'Binning', '2')
     mmc.setCameraDevice(DEVICE[0])
-    # mmc.setROI(0, 0, 512, 384)
+    # mmc.setProperty(DEVICE[0], 'Binning', '2')
+    mmc.setROI(*iptools.get_central_rect(mmc.getImageWidth(), mmc.getImageHeight(), divisor=2))
     mmc.setProperty(DEVICE[0], 'PixelType', '32bitRGB')
 
     cv2.namedWindow('Video')

@@ -22,6 +22,8 @@ class CalibMicro(object):
     TODO:
         * Use properties
         * Handle scales as class attributes
+        * Use binning
+        * Check 100 magnification
     """
 
     def __init__(self, scale):
@@ -32,11 +34,12 @@ class CalibMicro(object):
         self.scales = {'5': 9.1428482142944335E-01,
                        '10': 4.5714241071472167E-01,
                        '20': 2.2857120535736084E-01,
-                       '63': 7.2562287415035193E-02}
+                       '63': 7.2562287415035193E-02,
+                       '100': 1.371429411971124E-02}
         self.cur_scale = None
+        self.binning = 1
         self.set_curr_scale(scale)  # objective name
 #         self.roi = (2048, 1536)
-#         self.binning = 1, 2  # Не уверен, что этот параметр нужен.
 
     def um2px(self, um, scale=None):
         """Convert um to pixel line."""
@@ -103,15 +106,21 @@ def get_central_rect(width, height, divisor=1):
      256:    8    6 (1020, 765, 1028, 771)
      512:    4    2 (1022, 767, 1026, 769)
     1024:    2    0 (1023, 768, 1025, 768)
+    
+    LeicaDFC 295 available resolutions
+    2048 1536
+    1600 1200
+    1280 1024
+    1024  768
+     640  480
     """
     centerx = width / 2
     centery = height / 2
-    # divisor = 2 ** divisor
     roi = (
         centerx - centerx / divisor,
         centery - centery / divisor,
-        centerx + centerx / divisor,
-        centery + centery / divisor)
+        width / divisor,
+        height / divisor)
     return roi
 
 
@@ -316,7 +325,7 @@ def draw_masks(srcrgb, mask):
 
 ################################################################################
 # class AnalyticsTools(object):
-#     """Графики."""
+#     """Plots."""
 #     def __init__(self):
 #         super(AnalyticsTools, self).__init__()
 
