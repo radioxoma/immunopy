@@ -61,6 +61,24 @@ def set_min_size(value):
         MIN_SIZE = value
 
 
+def worker(stain, THRESHOLD_SHIFT, MIN_SIZE, MAX_SIZE):
+    """Process each stain.
+    
+    Return filtered objects and their count.
+    """
+    stth = iptools.threshold_isodata(stain, shift=THRESHOLD_SHIFT)
+    stmask = stain > stth
+    stmed = ndimage.filters.median_filter(stmask, size=2)
+    stedt = cv2.distanceTransform(
+        stmed.view(np.uint8), distanceType=cv2.cv.CV_DIST_L2, maskSize=3)
+    st_max = peak_local_max(
+        stedt, min_distance=PEAK_DISTANCE, exclude_border=False, indices=False)
+    stlabels, stlnum = iptools.watershed_segmentation(stmed, stedt, st_max)
+    stfiltered, stfnum = iptools.filter_objects(
+        stlabels, num=stlnum, min_size=MIN_SIZE, max_size=MAX_SIZE)
+    return stfiltered, stfnum
+
+
 def process(image):
     rgb = image.copy()
     # Коррекция освещённости
@@ -72,43 +90,27 @@ def process(image):
     scaled = iptools.rescale(meaned, scale=SCALE)
     
     # Разделение красителей
-    hdx = separate_stains(scaled, hdx_from_rgb) # Отрицательные значения!
+    hdx = separate_stains(scaled, hdx_from_rgb)
     hem = hdx[:,:,0]
     dab = hdx[:,:,1]
     # xna = hdx[:,:,2]
     
-    # threshold (still no correction)
-    hemth = iptools.threshold_isodata(hem, shift=THRESHOLD_SHIFT)
-    dabth = iptools.threshold_isodata(dab, shift=THRESHOLD_SHIFT)
-    hemmask = hem > hemth
-    dabmask = dab > dabth
+    # MULTICORE -------------------------------------------------------------
     
-    hemmed = ndimage.filters.median_filter(hemmask, size=2)
-    dabmed = ndimage.filters.median_filter(dabmask, size=2)
+    hemfiltered, hemfnum = worker(hem, THRESHOLD_SHIFT, MIN_SIZE, MAX_SIZE)
+    dabfiltered, dabfnum = worker(dab, THRESHOLD_SHIFT, MIN_SIZE, MAX_SIZE)
     
-    # Начало водораздела
-    hemedt = cv2.distanceTransform(hemmed.view(np.uint8), distanceType=cv2.cv.CV_DIST_L2, maskSize=3)
-    dabedt = cv2.distanceTransform(dabmed.view(np.uint8), distanceType=cv2.cv.CV_DIST_L2, maskSize=3)
-#     hemedt = ndimage.morphology.distance_transform_edt(hemmed)
-#     dabedt = ndimage.morphology.distance_transform_edt(dabmed)
+    # MULTICORE END ---------------------------------------------------------
     
-    hem_maxi = peak_local_max(hemedt, min_distance=PEAK_DISTANCE, exclude_border=False, indices=False)
-    dab_maxi = peak_local_max(dabedt, min_distance=PEAK_DISTANCE, exclude_border=False, indices=False)
-    
-    hemlabels, hemlnum = iptools.watershed_segmentation(hemmed, hemedt, hem_maxi)
-    dablabels, dablnum = iptools.watershed_segmentation(dabmed, dabedt, dab_maxi)
-    
-    hemfiltered, hemfnum = iptools.filter_objects(hemlabels, num=hemlnum, min_size=MIN_SIZE, max_size=MAX_SIZE)
-    dabfiltered, dabfnum = iptools.filter_objects(dablabels, num=dablnum, min_size=MIN_SIZE, max_size=MAX_SIZE)
-    
+    # Stats
     stats = 'Num H%dD%d, %.2f' % (hemfnum, dabfnum, float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100)
     stats2 = 'Are %.2f' % (iptools.calc_stats(hemfiltered, dabfiltered) * 100)
     stats3 = 'ArOR %.2f' % (iptools.calc_stats_binary(hemfiltered, dabfiltered) * 100)
 
+    # Visualization
     cv2.putText(scaled, stats, (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=255, thickness=2)
     cv2.putText(scaled, stats2, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=255, thickness=2)
     cv2.putText(scaled, stats3, (2,85), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=255, thickness=2)
-    
     cv2.imshow('Video', scaled[...,::-1])
     composite_rgb = np.dstack((hemfiltered, np.zeros_like(hemfiltered), dabfiltered)) # NB! BGR
     cv2.imshow('Masks', composite_rgb.astype(np.float32))
