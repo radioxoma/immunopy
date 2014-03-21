@@ -124,12 +124,12 @@ def get_central_rect(width, height, divisor=1):
     return roi
 
 
-def set_resolution(mmc, (width, height)):
+def set_mmc_resolution(mmc, width, height):
     """Select rectangular ROI in center of the frame.
     """
     x = (mmc.getImageWidth() - width) / 2
     y = (mmc.getImageHeight() - height) / 2
-    mmc.setROI(x, y, width, heigth)
+    mmc.setROI(x, y, width, height)
 
 
 def get_random_cm():
@@ -305,11 +305,19 @@ def circularity(arr):
     return arr.sum() / S
 
 
-def overlay():
-    pass
+def overlay(srcrgb, red, blue):
+    """Draw objects in single channel. Alpha-like.
+    """
+    rgb = srcrgb.copy()
+    np.copyto(
+        rgb[...,2], 255,
+        where=blue.astype(dtype=np.bool8))
+    np.copyto(
+        rgb[...,0], 255,
+        where=red.astype(dtype=np.bool8))
+    return rgb
 
-
-def draw_masks(srcrgb, mask):
+def draw_masks(srcrgb, red, blue):
     """Draw objects on image"""
     """
     Draws on source image with different colors under stains masks.
@@ -321,8 +329,14 @@ def draw_masks(srcrgb, mask):
     rgb = srcrgb.copy()
     # Заменяет все пикселы определённым цветом по маске. Маска псевдотрёхмерная.
     np.copyto(
+        rgb, np.array([0,0,255], dtype=np.uint8),
+        where=blue.astype(dtype=np.bool8)[:,:,None])
+    np.copyto(
         rgb, np.array([255,0,0], dtype=np.uint8),
-        where=mask.view(dtype=np.bool8)[:,:,None])
+        where=red.astype(dtype=np.bool8)[:,:,None])
+    np.copyto(
+        rgb, np.array([255,0,255], dtype=np.uint8),
+        where=np.logical_and(red, blue)[:,:,None])
 #     np.copyto(rgb, np.array([0,0,255], dtype=np.uint8), where=hem.view(dtype=np.bool8)[:,:,None])
 
     '''An alternative for grayscale stains.

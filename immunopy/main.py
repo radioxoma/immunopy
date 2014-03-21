@@ -25,7 +25,7 @@ MAGNIFICATION = '20'
 BLUR = 2
 THRESHOLD_SHIFT = 8
 PEAK_DISTANCE = 8
-MIN_SIZE = 150
+MIN_SIZE = 15
 MAX_SIZE = 3000
 
 
@@ -99,7 +99,7 @@ def process(image):
     
     hemfiltered, hemfnum = worker(hem, THRESHOLD_SHIFT, MIN_SIZE, MAX_SIZE)
     dabfiltered, dabfnum = worker(dab, THRESHOLD_SHIFT, MIN_SIZE, MAX_SIZE)
-    
+
     # MULTICORE END ---------------------------------------------------------
     
     # Stats
@@ -108,12 +108,15 @@ def process(image):
     stats3 = 'ArOR %.2f' % (iptools.calc_stats_binary(hemfiltered, dabfiltered) * 100)
 
     # Visualization
-    cv2.putText(scaled, stats, (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=255, thickness=2)
-    cv2.putText(scaled, stats2, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=255, thickness=2)
-    cv2.putText(scaled, stats3, (2,85), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=255, thickness=2)
-    cv2.imshow('Video', scaled[...,::-1])
-    composite_rgb = np.dstack((hemfiltered, np.zeros_like(hemfiltered), dabfiltered)) # NB! BGR
-    cv2.imshow('Masks', composite_rgb.astype(np.float32))
+    overlay = iptools.overlay(scaled, dabfiltered, hemfiltered)
+    cv2.putText(overlay, stats, (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 200, 0), thickness=2)
+    cv2.putText(overlay, stats2, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 200, 0), thickness=2)
+    cv2.putText(overlay, stats3, (2,85), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 200, 0), thickness=2)
+    cv2.imshow('Overlay', overlay[...,::-1])
+#     cv2.imshow('Video', scaled[...,::-1])
+#     composite_rgb = np.dstack((hemfiltered, np.zeros_like(hemfiltered), dabfiltered)) # NB! BGR
+#     cv2.imshow('Masks', composite_rgb.astype(np.float32))
+    
 
 
 def main():
@@ -140,21 +143,22 @@ if __name__ == '__main__':
     print('ImageBufferSize %f' % mmc.getImageBufferSize())  # Returns the size of the internal image buffer.
     print('BufferTotalCapacity %f' % mmc.getBufferTotalCapacity())
     mmc.setCircularBufferMemoryFootprint(60)
-    # mmc.enableStderrLog(False)
+    mmc.enableStderrLog(False)
+    mmc.enableDebugLog(False)
     mmc.loadDevice(*DEVICE)
     mmc.initializeDevice(DEVICE[0])
     mmc.setCameraDevice(DEVICE[0])
     # mmc.setProperty(DEVICE[0], 'Binning', '2')
-    mmc.setROI(*iptools.get_central_rect(mmc.getImageWidth(), mmc.getImageHeight(), divisor=2))
     mmc.setProperty(DEVICE[0], 'PixelType', '32bitRGB')
-
-    cv2.namedWindow('Video')
-    cv2.namedWindow('Masks')
+    iptools.set_mmc_resolution(mmc, 1024, 768)
+    mmc.snapImage()  # Baumer bug workaround
+#     cv2.namedWindow('Video')
+    cv2.namedWindow('Overlay')
     cv2.namedWindow('Controls')
     
     cv2.createTrackbar('EXPOSURE', 'Controls', 20, 100, set_exposure)
     cv2.createTrackbar('SHIFT_THRESHOLD', 'Controls', 108, 200, set_threshold_shift)
     cv2.createTrackbar('PEAK_DISTANCE', 'Controls', 8, 100, set_peak_distance)
     cv2.createTrackbar('MAX_SIZE', 'Controls', MAX_SIZE, 5000, set_max_size)
-    cv2.createTrackbar('MIN_SIZE', 'Controls', MIN_SIZE, 5000, set_min_size)
+    cv2.createTrackbar('MIN_SIZE', 'Controls', MIN_SIZE, 1000, set_min_size)
     sys.exit(main())

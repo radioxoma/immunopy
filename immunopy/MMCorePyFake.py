@@ -27,6 +27,8 @@ class CMMCore(object):
         self.RGB32 = self.BGRA.view(dtype=np.uint32)
     def startContinuousSequenceAcquisition(self, bool_):
         pass
+    def snapImage(self):
+        pass
     def loadDevice(self, *device):
         self.cam = ', '.join(device)
         print("Device '%s' loaded" % self.cam)
@@ -41,6 +43,8 @@ class CMMCore(object):
     def setROI(self, x, y, w, h):
         print('fake setROI: %d %d %d %d') % (x, y, w, h)
     def enableStderrLog(self, bool_):
+        pass
+    def enableDebugLog(self, bool_):
         pass
     def getBufferTotalCapacity(self):
         return 0.
