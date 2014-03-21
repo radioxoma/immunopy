@@ -35,7 +35,7 @@ class CalibMicro(object):
                        '10': 4.5714241071472167E-01,
                        '20': 2.2857120535736084E-01,
                        '63': 7.2562287415035193E-02,
-                       '100': 1.371429411971124E-02}
+                       '100': 4.571E-02}
         self.cur_scale = None
         self.binning = 1
         self.set_curr_scale(scale)  # objective name
@@ -122,6 +122,14 @@ def get_central_rect(width, height, divisor=1):
         width / divisor,
         height / divisor)
     return roi
+
+
+def set_resolution(mmc, (width, height)):
+    """Select rectangular ROI in center of the frame.
+    """
+    x = (mmc.getImageWidth() - width) / 2
+    y = (mmc.getImageHeight() - height) / 2
+    mmc.setROI(x, y, width, heigth)
 
 
 def get_random_cm():
