@@ -9,6 +9,7 @@ Created on 18 Jan. 2014 г.
 
 import sys
 import time
+from multiprocessing import Pool
 import numpy as np
 from scipy import ndimage
 import cv2
@@ -96,10 +97,12 @@ def process(image):
     # xna = hdx[:,:,2]
     
     # MULTICORE -------------------------------------------------------------
-    
-    hemfiltered, hemfnum = worker(hem, THRESHOLD_SHIFT, MIN_SIZE, MAX_SIZE)
-    dabfiltered, dabfnum = worker(dab, THRESHOLD_SHIFT, MIN_SIZE, MAX_SIZE)
-
+    hproc = POOL.apply_async(worker, (hem, THRESHOLD_SHIFT, MIN_SIZE, MAX_SIZE))
+    dproc = POOL.apply_async(worker, (dab, THRESHOLD_SHIFT, MIN_SIZE, MAX_SIZE))
+    hemfiltered, hemfnum = hproc.get(timeout=5)
+    dabfiltered, dabfnum = dproc.get(timeout=5)
+#     hemfiltered, hemfnum = worker(hem, THRESHOLD_SHIFT, MIN_SIZE, MAX_SIZE)
+#     dabfiltered, dabfnum = worker(dab, THRESHOLD_SHIFT, MIN_SIZE, MAX_SIZE)
     # MULTICORE END ---------------------------------------------------------
     
     # Stats
@@ -117,21 +120,6 @@ def process(image):
 #     composite_rgb = np.dstack((hemfiltered, np.zeros_like(hemfiltered), dabfiltered)) # NB! BGR
 #     cv2.imshow('Masks', composite_rgb.astype(np.float32))
     
-
-
-def main():
-    mmc.startContinuousSequenceAcquisition(1)
-    while True:
-        start_time = time.time()
-        rgb32 = mmc.getLastImage()
-        if rgb32 is not None:
-            process(iptools.rgb32asrgb(rgb32))
-        if cv2.waitKey(5) >= 0:
-            break
-        print('FPS: %f') % (1. / (time.time() - start_time))
-    mmc.reset()
-    cv2.destroyAllWindows()
-
 
 if __name__ == '__main__':
     CMicro = iptools.CalibMicro(MAGNIFICATION)
@@ -161,4 +149,17 @@ if __name__ == '__main__':
     cv2.createTrackbar('PEAK_DISTANCE', 'Controls', 8, 100, set_peak_distance)
     cv2.createTrackbar('MAX_SIZE', 'Controls', MAX_SIZE, 5000, set_max_size)
     cv2.createTrackbar('MIN_SIZE', 'Controls', MIN_SIZE, 1000, set_min_size)
-    sys.exit(main())
+    
+    POOL = Pool(processes=2)
+#   FPS single thread 1.35 > 1.8
+    mmc.startContinuousSequenceAcquisition(1)
+    while True:
+        start_time = time.time()
+        rgb32 = mmc.getLastImage()
+        if rgb32 is not None:
+            process(iptools.rgb32asrgb(rgb32))
+        if cv2.waitKey(5) >= 0:
+            break
+        print('FPS: %f') % (1. / (time.time() - start_time))
+    mmc.reset()
+    cv2.destroyAllWindows()
