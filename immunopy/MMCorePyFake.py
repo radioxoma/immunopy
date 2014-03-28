@@ -36,6 +36,8 @@ class CMMCore(object):
         print("Device '%s' initialized" % devname)
     def setCameraDevice(self, devname):
         print("Device camera '%s' initialized" % devname)
+    def hasProperty(self, *props):
+        pass
     def setProperty(self, *props):
         print("Props '%s' setted" % ', '.join([str(k) for k in props]))
     def setCircularBufferMemoryFootprint(self, value):

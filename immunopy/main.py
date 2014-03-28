@@ -17,13 +17,11 @@ from skimage.color import separate_stains, hdx_from_rgb
 from skimage.feature import peak_local_max
 import MMCorePyFake as MMCorePy
 
-import iptools 
-from ipdebug import show
+import iptools
 
 
 MAGNIFICATION = '10'
 
-BLUR = 2
 THRESHOLD_SHIFT = 8
 PEAK_DISTANCE = 8
 MIN_SIZE = 15
@@ -33,10 +31,6 @@ MAX_SIZE = 3000
 # DEVICE = ['Camera', 'DemoCamera', 'DCam']
 # DEVICE = ['Camera', 'OpenCVgrabber', 'OpenCVgrabber']
 DEVICE = ['Camera', 'BaumerOptronic', 'BaumerOptronic']
-
-
-def set_exposure(value):
-    mmc.setProperty(DEVICE[0], 'Exposure', int(value))
 
 
 def set_threshold_shift(value):
@@ -62,33 +56,35 @@ def set_min_size(value):
         MIN_SIZE = value
 
 
-def worker(stain, THRESHOLD_SHIFT, MIN_SIZE, MAX_SIZE):
-    """Process each stain.
-    
-    Return filtered objects and their count.
+def process(image, scale, threshold_shift, peak_distance, min_size, max_size):
+    """Segmentation and statistical calculation.
     """
-    stth = iptools.threshold_isodata(stain, shift=THRESHOLD_SHIFT)
-    stmask = stain > stth
-    stmed = ndimage.filters.median_filter(stmask, size=2)
-    stedt = cv2.distanceTransform(
-        stmed.view(np.uint8), distanceType=cv2.cv.CV_DIST_L2, maskSize=3)
-    st_max = peak_local_max(
-        stedt, min_distance=PEAK_DISTANCE, exclude_border=False, indices=False)
-    stlabels, stlnum = iptools.watershed_segmentation(stmed, stedt, st_max)
-    stfiltered, stfnum = iptools.filter_objects(
-        stlabels, num=stlnum, min_size=MIN_SIZE, max_size=MAX_SIZE)
-    return stfiltered, stfnum
-
-
-def process(image):
+    def worker(stain, threshold_shift, peak_distance, min_size, max_size):
+        """Process each stain.
+        
+        Return filtered objects and their count.
+        """
+        stth = iptools.threshold_isodata(stain, shift=threshold_shift)
+        stmask = stain > stth
+        stmed = ndimage.filters.median_filter(stmask, size=2)
+        stedt = cv2.distanceTransform(
+            stmed.view(np.uint8), distanceType=cv2.cv.CV_DIST_L2, maskSize=3)
+        st_max = peak_local_max(
+            stedt, min_distance=peak_distance, exclude_border=False, indices=False)
+        stlabels, stlnum = iptools.watershed_segmentation(stmed, stedt, st_max)
+        stfiltered, stfnum = iptools.filter_objects(
+            stlabels, stlnum, min_size, max_size)
+        return stfiltered, stfnum
+    
     rgb = image.copy()
     # Коррекция освещённости
     
     # Размытие
+    BLUR = 2
     meaned = cv2.blur(rgb, (BLUR, BLUR))
     
     # Масштаб
-    scaled = iptools.rescale(meaned, scale=SCALE)
+    scaled = iptools.rescale(meaned, scale)
     
     # Разделение красителей
     hdx = separate_stains(scaled, hdx_from_rgb)
@@ -97,24 +93,24 @@ def process(image):
     # xna = hdx[:,:,2]
     
     # MULTICORE -------------------------------------------------------------
-    hproc = POOL.apply_async(worker, (hem, THRESHOLD_SHIFT, MIN_SIZE, MAX_SIZE))
-    dproc = POOL.apply_async(worker, (dab, THRESHOLD_SHIFT, MIN_SIZE, MAX_SIZE))
-    hemfiltered, hemfnum = hproc.get(timeout=5)
-    dabfiltered, dabfnum = dproc.get(timeout=5)
-#     hemfiltered, hemfnum = worker(hem, THRESHOLD_SHIFT, MIN_SIZE, MAX_SIZE)
-#     dabfiltered, dabfnum = worker(dab, THRESHOLD_SHIFT, MIN_SIZE, MAX_SIZE)
+#     hproc = POOL.apply_async(worker, (hem, threshold_shift, peak_distance, min_size, max_size))
+#     dproc = POOL.apply_async(worker, (dab, threshold_shift, peak_distance, min_size, max_size))
+#     hemfiltered, hemfnum = hproc.get(timeout=5)
+#     dabfiltered, dabfnum = dproc.get(timeout=5)
+    hemfiltered, hemfnum = worker(hem, threshold_shift, peak_distance, min_size, max_size)
+    dabfiltered, dabfnum = worker(dab, threshold_shift, peak_distance, min_size, max_size)
     # MULTICORE END ---------------------------------------------------------
     
     # Stats
-    stats = 'Num H%dD%d, %.2f' % (hemfnum, dabfnum, float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100)
+    stats = 'Num D%3.d/H%3.d, %.2f' % (dabfnum, hemfnum, float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100)
     stats2 = 'Are %.2f' % (iptools.calc_stats(hemfiltered, dabfiltered) * 100)
     stats3 = 'ArOR %.2f' % (iptools.calc_stats_binary(hemfiltered, dabfiltered) * 100)
 
     # Visualization
     overlay = iptools.overlay(scaled, dabfiltered, hemfiltered)
-    cv2.putText(overlay, stats, (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 200, 0), thickness=2)
-    cv2.putText(overlay, stats2, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 200, 0), thickness=2)
-    cv2.putText(overlay, stats3, (2,85), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 200, 0), thickness=2)
+    cv2.putText(overlay, stats, (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+    cv2.putText(overlay, stats2, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+    cv2.putText(overlay, stats3, (2,85), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
 #     cv2.imshow('Video', scaled[...,::-1])
 #     composite_rgb = np.dstack((hemfiltered, np.zeros_like(hemfiltered), dabfiltered)) # NB! BGR
 #     cv2.imshow('Masks', composite_rgb.astype(np.float32))
@@ -140,11 +136,22 @@ if __name__ == '__main__':
     mmc.setProperty(DEVICE[0], 'PixelType', '32bitRGB')
     iptools.set_mmc_resolution(mmc, 1024, 768)
     mmc.snapImage()  # Baumer bug workaround
+    # mmc.initializeCircularBuffer()
 #     cv2.namedWindow('Video')
     cv2.namedWindow('Overlay')
     cv2.namedWindow('Controls')
-    
-    cv2.createTrackbar('EXPOSURE', 'Controls', 20, 100, set_exposure)
+    if mmc.hasProperty(DEVICE[0], 'Gain'):
+        cv2.createTrackbar(
+            'Gain', 'Controls',
+            int(float(mmc.getProperty(DEVICE[0], 'Gain'))),
+            int(mmc.getPropertyUpperLimit(DEVICE[0], 'Gain')),
+            lambda value: mmc.setProperty(DEVICE[0], 'Gain', value))
+    if mmc.hasProperty(DEVICE[0], 'Exposure'):
+        cv2.createTrackbar(
+            'Exposure', 'Controls',
+            int(float(mmc.getProperty(DEVICE[0], 'Exposure'))),
+            100,  # int(mmc.getPropertyUpperLimit(DEVICE[0], 'Exposure')),
+            lambda value: mmc.setProperty(DEVICE[0], 'Exposure', int(value)))
     cv2.createTrackbar('SHIFT_THRESHOLD', 'Controls', 108, 200, set_threshold_shift)
     cv2.createTrackbar('PEAK_DISTANCE', 'Controls', 8, 100, set_peak_distance)
     cv2.createTrackbar('MAX_SIZE', 'Controls', MAX_SIZE, 5000, set_max_size)
@@ -157,7 +164,13 @@ if __name__ == '__main__':
         start_time = time.time()
         rgb32 = mmc.getLastImage()
         if rgb32 is not None:
-            cv2.imshow('Overlay', process(iptools.rgb32asrgb(rgb32))[...,::-1])
+            cv2.imshow('Overlay', process(
+                iptools.rgb32asrgb(rgb32),
+                SCALE,
+                THRESHOLD_SHIFT,
+                PEAK_DISTANCE,
+                MIN_SIZE,
+                MAX_SIZE)[...,::-1])
         if cv2.waitKey(5) >= 0:
             break
         print('FPS: %f') % (1. / (time.time() - start_time))
