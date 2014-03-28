@@ -30,8 +30,8 @@ class CMMCore(object):
     def snapImage(self):
         pass
     def loadDevice(self, *device):
-        self.cam = ', '.join(device)
-        print("Device '%s' loaded" % self.cam)
+        self.input_video = ', '.join(device)
+        print("Device '%s' loaded" % self.input_video)
     def initializeDevice(self, devname):
         print("Device '%s' initialized" % devname)
     def setCameraDevice(self, devname):
@@ -60,4 +60,4 @@ class CMMCore(object):
     def stopSequenceAcquisition(self):
         pass
     def reset(self):
-        print('MMAdapterFake: Fake cam `%s` reseted.' % self.cam)
+        print('MMAdapterFake: Fake input_video `%s` reseted.' % self.input_video)

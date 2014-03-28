@@ -21,7 +21,7 @@ import iptools
 from ipdebug import show
 
 
-MAGNIFICATION = '20'
+MAGNIFICATION = '10'
 
 BLUR = 2
 THRESHOLD_SHIFT = 8
@@ -115,10 +115,10 @@ def process(image):
     cv2.putText(overlay, stats, (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 200, 0), thickness=2)
     cv2.putText(overlay, stats2, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 200, 0), thickness=2)
     cv2.putText(overlay, stats3, (2,85), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 200, 0), thickness=2)
-    cv2.imshow('Overlay', overlay[...,::-1])
 #     cv2.imshow('Video', scaled[...,::-1])
 #     composite_rgb = np.dstack((hemfiltered, np.zeros_like(hemfiltered), dabfiltered)) # NB! BGR
 #     cv2.imshow('Masks', composite_rgb.astype(np.float32))
+    return overlay
     
 
 if __name__ == '__main__':
@@ -157,7 +157,7 @@ if __name__ == '__main__':
         start_time = time.time()
         rgb32 = mmc.getLastImage()
         if rgb32 is not None:
-            process(iptools.rgb32asrgb(rgb32))
+            cv2.imshow('Overlay', process(iptools.rgb32asrgb(rgb32))[...,::-1])
         if cv2.waitKey(5) >= 0:
             break
         print('FPS: %f') % (1. / (time.time() - start_time))
