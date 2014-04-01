@@ -18,11 +18,12 @@ from skimage.feature import peak_local_max
 import MMCorePyFake as MMCorePy
 
 import iptools
+import lut
 
 
 MAGNIFICATION = '10'
 
-THRESHOLD_SHIFT = 8
+THRESHOLD_SHIFT = 10
 PEAK_DISTANCE = 8
 MIN_SIZE = 15
 MAX_SIZE = 3000
@@ -108,6 +109,7 @@ def process(image, scale, threshold_shift, peak_distance, min_size, max_size):
 
     # Visualization
     overlay = iptools.overlay(scaled, dabfiltered, hemfiltered)
+#     overlay = lut.apply_lut(hemfiltered, LUT)
     cv2.putText(overlay, stats, (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
     cv2.putText(overlay, stats2, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
     cv2.putText(overlay, stats3, (2,85), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
@@ -120,6 +122,7 @@ def process(image, scale, threshold_shift, peak_distance, min_size, max_size):
 if __name__ == '__main__':
     CMicro = iptools.CalibMicro(MAGNIFICATION)
     SCALE = CMicro.um2px(1)
+    LUT = lut.random_jet()
     print('curscale %f') % CMicro.get_curr_scale()
     print('um2px %f') % SCALE
     
@@ -134,7 +137,7 @@ if __name__ == '__main__':
     mmc.setCameraDevice(DEVICE[0])
     # mmc.setProperty(DEVICE[0], 'Binning', '2')
     mmc.setProperty(DEVICE[0], 'PixelType', '32bitRGB')
-    iptools.set_mmc_resolution(mmc, 1024, 768)
+#     iptools.set_mmc_resolution(mmc, 1024, 768)
     mmc.snapImage()  # Baumer bug workaround
     # mmc.initializeCircularBuffer()
 #     cv2.namedWindow('Video')
@@ -152,7 +155,7 @@ if __name__ == '__main__':
             int(float(mmc.getProperty(DEVICE[0], 'Exposure'))),
             100,  # int(mmc.getPropertyUpperLimit(DEVICE[0], 'Exposure')),
             lambda value: mmc.setProperty(DEVICE[0], 'Exposure', int(value)))
-    cv2.createTrackbar('SHIFT_THRESHOLD', 'Controls', 108, 200, set_threshold_shift)
+    cv2.createTrackbar('SHIFT_THRESHOLD', 'Controls', 100+THRESHOLD_SHIFT, 200, set_threshold_shift)
     cv2.createTrackbar('PEAK_DISTANCE', 'Controls', 8, 100, set_peak_distance)
     cv2.createTrackbar('MAX_SIZE', 'Controls', MAX_SIZE, 5000, set_max_size)
     cv2.createTrackbar('MIN_SIZE', 'Controls', MIN_SIZE, 1000, set_min_size)

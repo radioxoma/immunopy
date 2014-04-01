@@ -129,6 +129,8 @@ def set_mmc_resolution(mmc, width, height):
     """
     x = (mmc.getImageWidth() - width) / 2
     y = (mmc.getImageHeight() - height) / 2
+    if not all((x > 0, y > 0)):
+        raise ValueError('ROI w%d h%d is out of image size' % (width, height))
     mmc.setROI(x, y, width, height)
 
 

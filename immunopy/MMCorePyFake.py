@@ -25,6 +25,7 @@ class CMMCore(object):
         self.BGR = cv2.cvtColor(self.RGB, cv2.COLOR_RGB2BGR)
         self.BGRA = np.dstack((self.BGR, np.zeros((self.BGR.shape[0], self.BGR.shape[1]), dtype=np.uint8)))
         self.RGB32 = self.BGRA.view(dtype=np.uint32)
+        self.frame = self.RGB32
     def startContinuousSequenceAcquisition(self, bool_):
         pass
     def snapImage(self):
@@ -43,7 +44,11 @@ class CMMCore(object):
     def setCircularBufferMemoryFootprint(self, value):
         pass
     def setROI(self, x, y, w, h):
-        print('fake setROI: %d %d %d %d') % (x, y, w, h)
+        print('setROI: %d %d %d %d') % (x, y, w, h)
+        if self.RGB32.shape[0] < (y + h) or self.RGB32.shape[1] < (x + w):
+            raise ValueError(
+                'ROI %d, %d, %dx%d is bigger than image' % (x, y, w, h))
+        self.frame = self.RGB32[y:y+h, x:x+w].copy()
     def enableStderrLog(self, bool_):
         pass
     def enableDebugLog(self, bool_):
@@ -54,11 +59,14 @@ class CMMCore(object):
         return 0.
     def getLastImage(self):
 #         print('Last frame incoming!')
-        return self.RGB32
+        return self.frame
+    def popNextImage(self):
+#         print('Next frame incoming!')
+        return self.frame
     def getImageHeight(self):
-        return self.RGB.shape[0]
+        return self.frame.shape[0]
     def getImageWidth(self):
-        return self.RGB.shape[1]
+        return self.frame.shape[1]
     def stopSequenceAcquisition(self):
         pass
     def reset(self):
