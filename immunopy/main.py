@@ -27,6 +27,7 @@ THRESHOLD_SHIFT = 10
 PEAK_DISTANCE = 8
 MIN_SIZE = 15
 MAX_SIZE = 3000
+VTYPE = 0
 
 
 # DEVICE = ['Camera', 'DemoCamera', 'DCam']
@@ -55,6 +56,12 @@ def set_min_size(value):
     global MIN_SIZE
     if value > 0:
         MIN_SIZE = value
+
+
+def set_vtype(value):
+    """Type of visualization method (overlay or labels)."""
+    global VTYPE
+    VTYPE = value
 
 
 def process(image, scale, threshold_shift, peak_distance, min_size, max_size):
@@ -108,8 +115,12 @@ def process(image, scale, threshold_shift, peak_distance, min_size, max_size):
     stats3 = 'ArOR %.2f' % (iptools.calc_stats_binary(hemfiltered, dabfiltered) * 100)
 
     # Visualization
-    overlay = iptools.overlay(scaled, dabfiltered, hemfiltered)
-#     overlay = lut.apply_lut(hemfiltered, LUT)
+    if VTYPE == 0:
+        overlay = iptools.overlay(scaled, dabfiltered, hemfiltered)
+    elif VTYPE == 1:
+        overlay = lut.apply_lut(dabfiltered, LUT)
+    else:
+        overlay = lut.apply_lut(hemfiltered, LUT)
     cv2.putText(overlay, stats, (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
     cv2.putText(overlay, stats2, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
     cv2.putText(overlay, stats3, (2,85), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
@@ -159,6 +170,7 @@ if __name__ == '__main__':
     cv2.createTrackbar('PEAK_DISTANCE', 'Controls', 8, 100, set_peak_distance)
     cv2.createTrackbar('MAX_SIZE', 'Controls', MAX_SIZE, 5000, set_max_size)
     cv2.createTrackbar('MIN_SIZE', 'Controls', MIN_SIZE, 1000, set_min_size)
+    cv2.createTrackbar('VMethod', 'Controls', 0, 2, set_vtype)
     
     POOL = Pool(processes=2)
 #   FPS single thread 1.35 > 1.8
