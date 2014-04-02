@@ -148,7 +148,7 @@ if __name__ == '__main__':
     mmc.setCameraDevice(DEVICE[0])
     # mmc.setProperty(DEVICE[0], 'Binning', '2')
     mmc.setProperty(DEVICE[0], 'PixelType', '32bitRGB')
-#     iptools.set_mmc_resolution(mmc, 1024, 768)
+    iptools.set_mmc_resolution(mmc, 1024, 768)
     mmc.snapImage()  # Baumer bug workaround
     # mmc.initializeCircularBuffer()
 #     cv2.namedWindow('Video')

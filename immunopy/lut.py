@@ -13,7 +13,7 @@ from matplotlib.pyplot import cm
 
 def random_jet(bgcolor=(255, 255, 255)):
     """Generate random RGB lut for nice visually object distinguishing.
-    
+
     Return random uint8 cmap based on jet colors.
     """
     lut = (cm.jet(np.arange(256))[...,:3] * 256).round().astype(np.uint8)
@@ -32,7 +32,7 @@ def random(bgcolor=(255, 255, 255)):
 
 def apply_lut(arr, lut):
     """Apply arbitrary look-up-table with numpy.
-    
+
     See `lut.ipnb`.
     """
     # return np.take(lut, np.mod(arr, 256), axis=0)  # Faster on big arrays
