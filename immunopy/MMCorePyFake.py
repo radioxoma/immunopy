@@ -67,6 +67,8 @@ class CMMCore(object):
         return self.frame.shape[0]
     def getImageWidth(self):
         return self.frame.shape[1]
+    def getRemainingImageCount(self):
+        return 2
     def stopSequenceAcquisition(self):
         pass
     def reset(self):
