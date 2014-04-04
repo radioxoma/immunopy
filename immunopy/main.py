@@ -70,6 +70,13 @@ class CellProcessor(object):
         self._vtype = value
 
     @property
+    def threshold_shift(self):
+        return self._threshold_shift
+    @threshold_shift.setter
+    def threshold_shift(self, value):
+        self._threshold_shift = value
+
+    @property
     def min_size(self):
         return self._min_size
     @min_size.setter
@@ -96,22 +103,6 @@ class CellProcessor(object):
     def process(self, image):
         """Segmentation and statistical calculation.
         """
-        def worker(stain, threshold_shift, peak_distance, min_size, max_size):
-            """Process each stain.
-
-            Return filtered objects and their count.
-            """
-            stth = iptools.threshold_isodata(stain, shift=threshold_shift)
-            stmask = stain > stth
-            stmed = ndimage.filters.median_filter(stmask, size=2)
-            stedt = cv2.distanceTransform(
-                stmed.view(np.uint8), distanceType=cv2.cv.CV_DIST_L2, maskSize=3)
-            st_max = peak_local_max(
-                stedt, min_distance=self.peak_distance, exclude_border=False, indices=False)
-            stlabels, stlnum = iptools.watershed_segmentation(stmed, stedt, st_max)
-            stfiltered, stfnum = iptools.filter_objects(
-                stlabels, stlnum, min_size, max_size)
-            return stfiltered, stfnum
 
         rgb = image.copy()
         # Коррекция освещённости
@@ -140,8 +131,8 @@ class CellProcessor(object):
 
         # Stats
         stats = 'Num D%3.d/H%3.d, %.2f' % (dabfnum, hemfnum, float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100)
-        stats2 = 'Are %.2f' % (iptools.calc_stats(hemfiltered, dabfiltered) * 100)
-        stats3 = 'ArOR %.2f' % (iptools.calc_stats_binary(hemfiltered, dabfiltered) * 100)
+        stats2 = 'Area fract %.2f' % (iptools.calc_stats(hemfiltered, dabfiltered) * 100)
+        stats3 = 'Ar disj %.2f' % (iptools.calc_stats_binary(hemfiltered, dabfiltered) * 100)
 
         # Visualization
         if self.vtype == 0:
@@ -158,12 +149,31 @@ class CellProcessor(object):
         return overlay
 
 
+def worker(stain, threshold_shift, peak_distance, min_size, max_size):
+    """Process each stain.
+
+    Return filtered objects and their count.
+    Would not work with processes as class method.
+    """
+    stth = iptools.threshold_isodata(stain, shift=threshold_shift)
+    stmask = stain > stth
+    stmed = ndimage.filters.median_filter(stmask, size=2)
+    stedt = cv2.distanceTransform(
+        stmed.view(np.uint8), distanceType=cv2.cv.CV_DIST_L2, maskSize=3)
+    st_max = peak_local_max(
+        stedt, min_distance=peak_distance, exclude_border=False, indices=False)
+    stlabels, stlnum = iptools.watershed_segmentation(stmed, stedt, st_max)
+    stfiltered, stfnum = iptools.filter_objects(
+        stlabels, stlnum, min_size, max_size)
+    return stfiltered, stfnum
+
+
 if __name__ == '__main__':
     CMicro = iptools.CalibMicro(MAGNIFICATION)
     SCALE = CMicro.um2px(1)
     LUT = lut.random_jet()
     POOL = Pool(processes=2)
-    CProcessor = CellProcessor(scale=SCALE, pool=None)
+    CProcessor = CellProcessor(scale=SCALE, pool=POOL)
     print('curscale %f') % CMicro.get_curr_scale()
     print('um2px %f') % SCALE
 
