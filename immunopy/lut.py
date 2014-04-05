@@ -35,5 +35,5 @@ def apply_lut(arr, lut):
 
     See `lut.ipnb`.
     """
-    # return np.take(lut, np.mod(arr, 256), axis=0)  # Faster on big arrays
-    return np.take(lut, arr, axis=0, mode='wrap')  # Faster on small arrays
+    # return np.take(lut, np.mod(arr, 256), axis=0)
+    return np.take(lut, arr, axis=0, mode='wrap')

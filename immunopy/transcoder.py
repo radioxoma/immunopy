@@ -27,7 +27,7 @@ if __name__ == '__main__':
     POOL = Pool(processes=2)
     CProcessor = iptools.CellProcessor(scale=CMicro.um2px(1), colormap=lut.random_jet(), pool=POOL)
     CProcessor.vtype = 1
-    
+
     cv2.namedWindow('Video')
     input_video = cv2.VideoCapture('/home/radioxoma/analysis/Видео/10x_1280x1024_20_lags_perfect.avi')
     assert(input_video.isOpened())

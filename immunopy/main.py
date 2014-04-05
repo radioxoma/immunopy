@@ -63,7 +63,7 @@ if __name__ == '__main__':
     mmc.setCameraDevice(DEVICE[0])
     # mmc.setProperty(DEVICE[0], 'Binning', '2')
     mmc.setProperty(DEVICE[0], 'PixelType', '32bitRGB')
-    iptools.set_mmc_resolution(mmc, 500, 500)
+    iptools.set_mmc_resolution(mmc, 512, 512)
     mmc.snapImage()  # Baumer bug workaround
     # mmc.initializeCircularBuffer()
     cv2.namedWindow('Overlay')
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     cv2.createTrackbar('PEAK_DISTANCE', 'Controls', CProcessor.peak_distance, 100, set_peak_distance)
     cv2.createTrackbar('MAX_SIZE', 'Controls', CProcessor.max_size, 5000, set_max_size)
     cv2.createTrackbar('MIN_SIZE', 'Controls', CProcessor.min_size, 1000, set_min_size)
-    cv2.createTrackbar('VMethod', 'Controls', CProcessor.vtype, 3, set_vtype)
+    cv2.createTrackbar('VMethod', 'Controls', CProcessor.vtype, 4, set_vtype)
     mmc.startContinuousSequenceAcquisition(1)
 
     while True:

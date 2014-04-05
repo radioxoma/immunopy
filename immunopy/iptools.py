@@ -171,8 +171,20 @@ class CellProcessor(object):
             overlay = draw_overlay(scaled, dabfiltered, hemfiltered)
         elif self.vtype == 2:
             overlay = lut.apply_lut(dabfiltered, self.colormap)
-        else:
+        elif self.vtype == 3:
             overlay = lut.apply_lut(hemfiltered, self.colormap)
+        else:
+            overlay = draw_overlay(scaled, dabfiltered, hemfiltered)
+            dabcolored = lut.apply_lut(dabfiltered, self.colormap)
+            hemcolored = lut.apply_lut(hemfiltered, self.colormap)
+            cv2.putText(scaled, stats, (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+            cv2.putText(scaled, stats2, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+            cv2.putText(scaled, stats3, (2,85), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+            cv2.putText(overlay, 'Overlay', (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+            cv2.putText(dabcolored, 'DAB', (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+            cv2.putText(hemcolored, 'HEM', (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+            return montage(scaled, dabcolored, overlay, hemcolored)
+
         cv2.putText(overlay, stats, (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
         cv2.putText(overlay, stats2, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
         cv2.putText(overlay, stats3, (2,85), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
@@ -455,6 +467,18 @@ def draw_masks(srcrgb, red, blue):
                rescale_intensity(hem, out_range=(0, 1))))
     '''
     return rgb
+
+
+def montage(tl, tr, bl, br):
+    """All shapes must be same. Memory-save.
+    """
+    h, w, d = tl.shape
+    blank = np.empty((h * 2, w * 2, d), dtype=np.uint8)
+    blank[:h, :w] = tl
+    blank[h:, :w] = bl
+    blank[:h, w:] = tr
+    blank[h:, w:] = br
+    return blank
 
 ################################################################################
 # class AnalyticsTools(object):
