@@ -11,7 +11,11 @@ import numpy as np
 from scipy import ndimage
 from skimage.exposure import histogram
 from skimage.morphology import watershed
+from skimage.color import separate_stains, hdx_from_rgb
+from skimage.feature import peak_local_max
 import cv2
+
+import lut
 
 
 class CalibMicro(object):
@@ -40,7 +44,7 @@ class CalibMicro(object):
         self.binning = 1
         self.curr_scale = objective_name  # objective name
 #         self.roi = (2048, 1536)
-    
+
     @property
     def curr_scale(self):
         return self._curr_scale
@@ -49,7 +53,7 @@ class CalibMicro(object):
         """Set microscope scale from available."""
         assert(isinstance(value, str))
         self._curr_scale = self.scales[value]
-    
+
     def um2px(self, um, scale=None):
         """Convert um to pixel line."""
         return um / self.curr_scale
@@ -66,18 +70,132 @@ class CalibMicro(object):
         """Диаметр (um) в площадь эквивалентного квадрата в px."""
         return self.um2px(diameter) ** 2
 
-
     # def set_all_scales(self):
     #     pass
 
     # def get_all_scales(self):
     #     pass
 
-################################################################################
-# class Improc(object):
-#     """Обработка и анализ изображений."""
-#     def __init__(self):
-#         super(Improc, self).__init__()
+
+class CellProcessor(object):
+    """Segment and visualize cell image."""
+    def __init__(self, scale, colormap, pool=None):
+        super(CellProcessor, self).__init__()
+        self.threshold_shift = 20
+        self.min_size = 10
+        self.max_size = 3000
+        self.vtype = 1
+
+        self.peak_distance = 8
+        self.scale = scale
+        self.blur = 2
+        self.colormap = colormap
+        self.pool = pool
+
+    @property
+    def vtype(self):
+        return self._vtype
+    @vtype.setter
+    def vtype(self, value):
+        self._vtype = value
+
+    @property
+    def threshold_shift(self):
+        return self._threshold_shift
+    @threshold_shift.setter
+    def threshold_shift(self, value):
+        self._threshold_shift = value
+
+    @property
+    def min_size(self):
+        return self._min_size
+    @min_size.setter
+    def min_size(self, value):
+        if value > 0:
+            self._min_size = value
+
+    @property
+    def max_size(self):
+        return self._max_size
+    @max_size.setter
+    def max_size(self, value):
+        if value > 0:
+            self._max_size = value
+
+    @property
+    def peak_distance(self):
+        return self._peak_distance
+    @peak_distance.setter
+    def peak_distance(self, value):
+        if value > 0:
+            self._peak_distance = value
+
+    def process(self, image):
+        """Segmentation and statistical calculation.
+        """
+
+        rgb = image.copy()
+        # Коррекция освещённости
+
+        # Размытие
+        meaned = cv2.blur(rgb, (self.blur, self.blur))
+
+        # Масштаб
+        scaled = rescale(meaned, self.scale)
+
+        # Разделение красителей
+        hdx = separate_stains(scaled, hdx_from_rgb)
+        hem = hdx[:,:,0]
+        dab = hdx[:,:,1]
+
+        # MULTICORE -------------------------------------------------------------
+        if self.pool is None:
+            hemfiltered, hemfnum = worker(hem, self.threshold_shift, self.peak_distance, self.min_size, self.max_size)
+            dabfiltered, dabfnum = worker(dab, self.threshold_shift + 10, self.peak_distance, self.min_size, self.max_size)
+        else:
+            hproc = self.pool.apply_async(worker, (hem, self.threshold_shift, self.peak_distance, self.min_size, self.max_size))
+            dproc = self.pool.apply_async(worker, (dab, self.threshold_shift + 10, self.peak_distance, self.min_size, self.max_size))
+            hemfiltered, hemfnum = hproc.get(timeout=5)
+            dabfiltered, dabfnum = dproc.get(timeout=5)
+        # MULTICORE END ---------------------------------------------------------
+
+        # Stats
+        stats = 'Num D%3.d/H%3.d, %.2f' % (dabfnum, hemfnum, float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100)
+        stats2 = 'Area fract %.2f' % (calc_stats(hemfiltered, dabfiltered) * 100)
+        stats3 = 'Ar disj %.2f' % (calc_stats_binary(hemfiltered, dabfiltered) * 100)
+
+        # Visualization
+        if self.vtype == 0:
+            overlay = scaled
+        elif self.vtype == 1:
+            overlay = draw_overlay(scaled, dabfiltered, hemfiltered)
+        elif self.vtype == 2:
+            overlay = lut.apply_lut(dabfiltered, self.colormap)
+        else:
+            overlay = lut.apply_lut(hemfiltered, self.colormap)
+        cv2.putText(overlay, stats, (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+        cv2.putText(overlay, stats2, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+        cv2.putText(overlay, stats3, (2,85), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+        return overlay
+
+
+def worker(stain, threshold_shift, peak_distance, min_size, max_size):
+    """Process each stain.
+
+    Return filtered objects and their count.
+    Would not work with processes as class method.
+    """
+    stth = threshold_isodata(stain, shift=threshold_shift)
+    stmask = stain > stth
+    stmed = ndimage.filters.median_filter(stmask, size=2)
+    stedt = cv2.distanceTransform(
+        stmed.view(np.uint8), distanceType=cv2.cv.CV_DIST_L2, maskSize=3)
+    st_max = peak_local_max(
+        stedt, min_distance=peak_distance, exclude_border=False, indices=False)
+    stlabels, stlnum = watershed_segmentation(stmed, stedt, st_max)
+    stfiltered, stfnum = filter_objects(
+        stlabels, stlnum, min_size, max_size)
+    return stfiltered, stfnum
 
 
 def rgb32asrgb(rgb32):
@@ -108,7 +226,7 @@ def get_central_rect(width, height, divisor=1):
      256:    8    6 (1020, 765, 1028, 771)
      512:    4    2 (1022, 767, 1026, 769)
     1024:    2    0 (1023, 768, 1025, 768)
-    
+
     LeicaDFC 295 available resolutions
     2048 1536
     1600 1200
@@ -134,18 +252,6 @@ def set_mmc_resolution(mmc, width, height):
     if not all((x > 0, y > 0)):
         raise ValueError('ROI w%d h%d is out of image size' % (width, height))
     mmc.setROI(x, y, width, height)
-
-
-def get_random_cm():
-    """Generate random colormap for easy visual distinguishing of objects."""
-    import random
-    from matplotlib import colors as mc
-    from matplotlib.cm import jet
-
-    colors = map(jet, range(0, 256, 4))
-    random.shuffle(colors)
-    colors[0] = (0., 0., 0., 1.)
-    return mc.ListedColormap(colors)
 
 
 def correct_background():
@@ -309,7 +415,7 @@ def circularity(arr):
     return arr.sum() / S
 
 
-def overlay(srcrgb, red, blue):
+def draw_overlay(srcrgb, red, blue):
     """Draw objects in single channel. Alpha-like.
     """
     rgb = srcrgb.copy()
@@ -320,6 +426,7 @@ def overlay(srcrgb, red, blue):
         rgb[...,0], 255,
         where=red.astype(dtype=np.bool8))
     return rgb
+
 
 def draw_masks(srcrgb, red, blue):
     """Draw objects on image"""
