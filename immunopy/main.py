@@ -174,7 +174,7 @@ if __name__ == '__main__':
     LUT = lut.random_jet()
     POOL = Pool(processes=2)
     CProcessor = CellProcessor(scale=SCALE, pool=POOL)
-    print('curscale %f') % CMicro.get_curr_scale()
+    print('curscale %f') % CMicro.curr_scale
     print('um2px %f') % SCALE
 
     mmc = MMCorePy.CMMCore()

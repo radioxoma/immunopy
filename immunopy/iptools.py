@@ -26,7 +26,7 @@ class CalibMicro(object):
         * Check 100 magnification
     """
 
-    def __init__(self, scale):
+    def __init__(self, objective_name):
         """Objective scales (um/px) from Leica Acquisition Suite *.cal.xml
         files for Leica DMI 2000 optical microscope.
         """
@@ -36,18 +36,27 @@ class CalibMicro(object):
                        '20': 2.2857120535736084E-01,
                        '63': 7.2562287415035193E-02,
                        '100': 4.571E-02}
-        self.cur_scale = None
+        # self.curr_scale = None
         self.binning = 1
-        self.set_curr_scale(scale)  # objective name
+        self.curr_scale = objective_name  # objective name
 #         self.roi = (2048, 1536)
-
+    
+    @property
+    def curr_scale(self):
+        return self._curr_scale
+    @curr_scale.setter
+    def curr_scale(self, value):
+        """Set microscope scale from available."""
+        assert(isinstance(value, str))
+        self._curr_scale = self.scales[value]
+    
     def um2px(self, um, scale=None):
         """Convert um to pixel line."""
-        return um / self.cur_scale
+        return um / self.curr_scale
 
     def px2um(self, um, scale=None):
         """Convert pixel line to um."""
-        return um * self.cur_scale
+        return um * self.curr_scale
 
     def um2circle(self, diameter):
         """Диаметр (um) в площадь эквивалентного круга в px."""
@@ -57,13 +66,6 @@ class CalibMicro(object):
         """Диаметр (um) в площадь эквивалентного квадрата в px."""
         return self.um2px(diameter) ** 2
 
-    def set_curr_scale(self, scale):
-        """Set microscope scale from available."""
-        assert(isinstance(scale, str))
-        self.cur_scale = self.scales[scale]
-
-    def get_curr_scale(self):
-        return self.cur_scale
 
     # def set_all_scales(self):
     #     pass
