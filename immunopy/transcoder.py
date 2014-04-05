@@ -7,19 +7,14 @@ Created on 2014-03-28
 @author: radioxoma
 """
 
+from multiprocessing import Pool
 import cv2
-import main
 import iptools
+import lut
 
 
 MAGNIFICATION = '10'
-CMicro = iptools.CalibMicro(MAGNIFICATION)
-SCALE = CMicro.um2px(1)
-
-THRESHOLD_SHIFT = 8
-PEAK_DISTANCE = 8
-MIN_SIZE = 15
-MAX_SIZE = 3000
+COUNTER = 0
 
 
 def CV_FOURCC(c1, c2, c3, c4):
@@ -28,13 +23,17 @@ def CV_FOURCC(c1, c2, c3, c4):
 
 
 if __name__ == '__main__':
-    counter = 0
-    # cv2.namedWindow('Video')
+    CMicro = iptools.CalibMicro(MAGNIFICATION)
+    POOL = Pool(processes=2)
+    CProcessor = iptools.CellProcessor(scale=CMicro.um2px(1), colormap=lut.random_jet(), pool=POOL)
+    CProcessor.vtype = 1
+    
+    cv2.namedWindow('Video')
     input_video = cv2.VideoCapture('/home/radioxoma/analysis/Видео/10x_1280x1024_20_lags_perfect.avi')
     assert(input_video.isOpened())
     fps = int(input_video.get(cv2.cv.CV_CAP_PROP_FPS))
     allframes = int(input_video.get(cv2.cv.CV_CAP_PROP_FRAME_COUNT))
-    print(fps, allframes)
+    print('Source fps: %d, total %d frames') % (fps, allframes)
     # fourcc = cv2.cv.FOURCC('I', 'Y', 'U', 'V')
     codecArr = 'XVID'
     fourcc = CV_FOURCC(
@@ -43,41 +42,27 @@ if __name__ == '__main__':
         ord(codecArr[2]),
         ord(codecArr[3]))
     status, bgr = input_video.read()
-    frame = main.process(
-        bgr[...,::-1],
-        SCALE,
-        THRESHOLD_SHIFT,
-        PEAK_DISTANCE,
-        MIN_SIZE,
-        MAX_SIZE)
-#    cv2.imshow('Video', frame[...,::-1])
+    frame = CProcessor.process(bgr[...,::-1])
     height, width = frame.shape[:2]
     output_video = cv2.VideoWriter(
         filename='rendered.avi',
         fourcc=fourcc,  # '-1' Ask for an codec; '0' disables compressing.
-        fps=fps,
+        fps=10,
         frameSize=(width, height),
         isColor=True)
     assert(output_video.isOpened())
     if status is True:
-        counter += 1
+        COUNTER += 1
         output_video.write(frame[...,::-1])
     while True:
         status, bgr = input_video.read()
         if status is True:
-            counter += 1
-            print('Remaining %d/%d') % (allframes - counter, allframes)
-            frame = main.process(
-                bgr[...,::-1],
-                SCALE,
-                THRESHOLD_SHIFT,
-                PEAK_DISTANCE,
-                MIN_SIZE,
-                MAX_SIZE)
+            COUNTER += 1
+            print('Remaining %d/%d') % (allframes - COUNTER, allframes)
+            frame = CProcessor.process(bgr[...,::-1])
 #             cv2.imshow('Video', frame[...,::-1])
             output_video.write(frame[...,::-1])
-#             print(frame.shape)
-#             if counter > 50:
+#             if COUNTER > 50:
 #                 break
         else:
             break
