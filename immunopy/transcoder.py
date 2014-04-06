@@ -15,6 +15,8 @@ import lut
 
 MAGNIFICATION = '10'
 COUNTER = 0
+H = 591
+W = 1050
 
 
 def CV_FOURCC(c1, c2, c3, c4):
@@ -26,7 +28,7 @@ if __name__ == '__main__':
     CMicro = iptools.CalibMicro(MAGNIFICATION)
     POOL = Pool(processes=2)
     CProcessor = iptools.CellProcessor(scale=CMicro.um2px(1), colormap=lut.random_jet(), pool=POOL)
-    CProcessor.vtype = 1
+    CProcessor.vtype = 4
 
     cv2.namedWindow('Video')
     input_video = cv2.VideoCapture('/home/radioxoma/analysis/Видео/10x_1280x1024_20_lags_perfect.avi')
@@ -42,8 +44,10 @@ if __name__ == '__main__':
         ord(codecArr[2]),
         ord(codecArr[3]))
     status, bgr = input_video.read()
-    frame = CProcessor.process(bgr[...,::-1])
+#     frame = CProcessor.process(bgr[...,::-1])
+    frame = CProcessor.process(bgr[:H,:W,::-1])
     height, width = frame.shape[:2]
+    print(frame.shape)
     output_video = cv2.VideoWriter(
         filename='rendered.avi',
         fourcc=fourcc,  # '-1' Ask for an codec; '0' disables compressing.
@@ -59,7 +63,7 @@ if __name__ == '__main__':
         if status is True:
             COUNTER += 1
             print('Remaining %d/%d') % (allframes - COUNTER, allframes)
-            frame = CProcessor.process(bgr[...,::-1])
+            frame = CProcessor.process(bgr[:H,:W,::-1])
 #             cv2.imshow('Video', frame[...,::-1])
             output_video.write(frame[...,::-1])
 #             if COUNTER > 50:

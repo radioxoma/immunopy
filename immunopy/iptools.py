@@ -160,9 +160,9 @@ class CellProcessor(object):
         # MULTICORE END ---------------------------------------------------------
 
         # Stats
-        stats = 'Num D%3.d/H%3.d, %.2f' % (dabfnum, hemfnum, float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100)
-        stats2 = 'Area fract %.2f' % (calc_stats(hemfiltered, dabfiltered) * 100)
-        stats3 = 'Ar disj %.2f' % (calc_stats_binary(hemfiltered, dabfiltered) * 100)
+        stats =  float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100
+        stats2 = calc_stats(hemfiltered, dabfiltered) * 100
+        stats3 = calc_stats_binary(hemfiltered, dabfiltered) * 100
 
         # Visualization
         if self.vtype == 0:
@@ -177,17 +177,16 @@ class CellProcessor(object):
             overlay = draw_overlay(scaled, dabfiltered, hemfiltered)
             dabcolored = lut.apply_lut(dabfiltered, self.colormap)
             hemcolored = lut.apply_lut(hemfiltered, self.colormap)
-            cv2.putText(scaled, stats, (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
-            cv2.putText(scaled, stats2, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
-            cv2.putText(scaled, stats3, (2,85), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
-            cv2.putText(overlay, 'Overlay', (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
-            cv2.putText(dabcolored, 'DAB', (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
-            cv2.putText(hemcolored, 'HEM', (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
-            return montage(scaled, dabcolored, overlay, hemcolored)
+            cv2.putText(scaled, 'Cell fraction %.1f %%' % stats, (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
+            cv2.putText(scaled, 'Area fr. %.1f, disj %.1f' % (stats2, stats3), (12,120), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
+            cv2.putText(overlay, 'Colocalization', (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
+            cv2.putText(dabcolored, 'DAB %3.d objects' % dabfnum, (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
+            cv2.putText(hemcolored, 'HEM %3.d objects' % hemfnum, (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
+            return montage(scaled, hemcolored, overlay, dabcolored)
 
-        cv2.putText(overlay, stats, (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
-        cv2.putText(overlay, stats2, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
-        cv2.putText(overlay, stats3, (2,85), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+        cv2.putText(overlay, 'Num D%3.d/H%3.d, %.2f %%' % (dabfnum, hemfnum, stats), (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+        cv2.putText(overlay, 'Area fract %.2f' % stats2, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+        cv2.putText(overlay, 'Ar disj %.2f' % stats3, (2,85), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
         return overlay
 
 
