@@ -49,7 +49,7 @@ if __name__ == '__main__':
     SCALE = CMicro.um2px(1)
     POOL = Pool(processes=2)
     CProcessor = iptools.CellProcessor(scale=SCALE, colormap=lut.random_jet(), pool=POOL)
-    print('curscale %f') % CMicro.curr_scale
+    print('curscale %f') % CMicro.scale
     print('um2px %f') % SCALE
 
     mmc = MMCorePy.CMMCore()

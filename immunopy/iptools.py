@@ -7,6 +7,7 @@ Created on 16 Jan. 2014 г.
 @author: radioxoma
 """
 
+import operator
 import numpy as np
 from scipy import ndimage
 from skimage.exposure import histogram
@@ -25,42 +26,50 @@ class CalibMicro(object):
 
     TODO:
         * Use properties
-        * Handle scales as class attributes
+        * Handle _scales as class attributes
         * Use binning
         * Check 100 magnification
     """
 
     def __init__(self, objective_name):
-        """Objective scales (um/px) from Leica Acquisition Suite *.cal.xml
+        """Objective _scales (um/px) from Leica Acquisition Suite *.cal.xml
         files for Leica DMI 2000 optical microscope.
         """
         super(CalibMicro, self).__init__()
-        self.scales = {'5': 9.1428482142944335E-01,
+        self._scales = {'5': 9.1428482142944335E-01,
                        '10': 4.5714241071472167E-01,
                        '20': 2.2857120535736084E-01,
                        '63': 7.2562287415035193E-02,
                        '100': 4.571E-02}
-        # self.curr_scale = None
+        # self.scale = None
         self.binning = 1
-        self.curr_scale = objective_name  # objective name
+        self.scalename = objective_name  # objective name
 #         self.roi = (2048, 1536)
 
     @property
-    def curr_scale(self):
+    def scale(self):
+        """Get current scale."""
         return self._curr_scale
-    @curr_scale.setter
-    def curr_scale(self, value):
-        """Set microscope scale from available."""
+    @property
+    def scalename(self):
+        """Get current scalename (objective name)."""
+        return self._curr_scalename
+    @scalename.setter
+    def scalename(self, value):
+        """Set microscope objective scale by available scalename."""
         assert(isinstance(value, str))
-        self._curr_scale = self.scales[value]
-
+        if value not in self._scales:
+            raise ValueError('Unknown microscope objective name')
+        self._curr_scale = self._scales[value]
+        self._curr_scalename = value
+            
     def um2px(self, um, scale=None):
         """Convert um to pixel line."""
-        return um / self.curr_scale
+        return um / self.scale
 
     def px2um(self, um, scale=None):
         """Convert pixel line to um."""
-        return um * self.curr_scale
+        return um * self.scale
 
     def um2circle(self, diameter):
         """Диаметр (um) в площадь эквивалентного круга в px."""
@@ -73,8 +82,9 @@ class CalibMicro(object):
     # def set_all_scales(self):
     #     pass
 
-    # def get_all_scales(self):
-    #     pass
+    def get_all_scalenames(self):
+        """Scale list sorted by scale."""
+        return sorted(self._scales.iterkeys(), key=self._scales.__getitem__, reverse=True)
 
 
 class CellProcessor(object):

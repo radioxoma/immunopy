@@ -15,12 +15,12 @@ class Test(unittest.TestCase):
 
     def testInstance(self):
         CMicro = CalibMicro('20')
-        assert(0.22 < CMicro.curr_scale < 0.23)
+        assert(0.22 < CMicro.scale < 0.23)
 
     def testScaleSwitching(self):
         CMicro = CalibMicro('20')
-        CMicro.curr_scale = '10'
-        assert(0.45 < CMicro.curr_scale < 0.46)
+        CMicro.scale = '10'
+        assert(0.45 < CMicro.scale < 0.46)
         
     def testUm2px(self):
         CMicro = CalibMicro('20')

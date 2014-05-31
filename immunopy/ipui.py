@@ -58,8 +58,22 @@ class MicroscopeControl(QtGui.QWidget):
         self.grid.addWidget(self.slid_gain, 4, 1)
         self.grid.addWidget(self.spin_gain, 4, 2)
         self.vbox.addLayout(self.grid)
-
-
+        
+        # Set camera name
+        self.titl_camn.setText(
+            self.parent.mmc.getDeviceDescription(
+                self.parent.mmc.getCameraDevice()))
+        
+        # Get scales and set default.
+        self.comb_magn.addItems(self.parent.CMicro.get_all_scalenames())
+        self.comb_magn.setCurrentIndex(
+            self.comb_magn.findText(self.parent.CMicro.scalename))
+        self.comb_magn.currentIndexChanged.connect(self.change_scalename)
+    
+    @QtCore.Slot(int)
+    def change_scalename(self, index):
+        self.parent.CMicro.scalename = str(self.comb_magn.currentText())
+        
 class AnalysisControl(QtGui.QWidget):
     """Control image analysis workflow.
     """
