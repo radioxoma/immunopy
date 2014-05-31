@@ -29,11 +29,15 @@ class AdjustBar(QtGui.QWidget):
     """Slider and spinbox widget.
     
     dtype - Data type of MM property value: int or float.
+    BUG: precision is not enough.
     """
     def __init__(self, minlim, maxlim, dtype, parent=None):
         super(AdjustBar, self).__init__(parent)
         self.parent = parent
         self.mult = 100.0
+        self.maxlim = maxlim
+        self.minlim = minlim
+        
         self.hbox = QtGui.QHBoxLayout(self.parent)
         # self.hbox.setAlignment(QtCore.Qt.AlignTop)
         self.setLayout(self.hbox)
@@ -46,11 +50,10 @@ class AdjustBar(QtGui.QWidget):
             self.spin.valueChanged.connect(self.slid.setValue)
         else:
             self.spin = QtGui.QDoubleSpinBox()
-            self.spin.setSingleStep(0.01)
+            self.spin.setSingleStep(0.1)
             # Stretch slider
-            self.slid.setRange(minlim, minlim + (maxlim - minlim) * self.mult)
+            self.slid.setRange(minlim, (self.maxlim - self.minlim) * self.mult + self.minlim)
             self.spin.setRange(minlim, maxlim)
-            print(minlim + (maxlim - minlim) * self.mult)
             self.slid.valueChanged.connect(self.notifyIntValueChanged)
             self.spin.valueChanged.connect(self.notifyDoubleValueChanged)
         self.hbox.addWidget(self.slid)
@@ -58,13 +61,13 @@ class AdjustBar(QtGui.QWidget):
         
     @QtCore.Slot(float)
     def notifyDoubleValueChanged(self, value):
-        """Emulate double slider."""
-        self.slid.setValue(value * self.mult)
+        target = (value - self.minlim) * self.mult + self.minlim
+        self.slid.setValue(target)
     
     @QtCore.Slot(int)
     def notifyIntValueChanged(self, value):
-        """This is from spinbox to slider."""
-        self.spin.setValue(value / self.mult)
+        target = (value - self.minlim) / self.mult + self.minlim
+        self.spin.setValue(target)
 
 
 class MicroscopeControl(QtGui.QWidget):
