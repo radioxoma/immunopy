@@ -25,6 +25,48 @@ ERROR_ON_COPY = True  # Raise exception on array copy or casting
 # http://pyopengl.sourceforge.net/documentation/opengl_diffs.html
 
 
+class AdjustBar(QtGui.QWidget):
+    """Slider and spinbox widget.
+    
+    dtype - Data type of MM property value: int or float.
+    """
+    def __init__(self, minlim, maxlim, dtype, parent=None):
+        super(AdjustBar, self).__init__(parent)
+        self.parent = parent
+        self.mult = 100.0
+        self.hbox = QtGui.QHBoxLayout(self.parent)
+        # self.hbox.setAlignment(QtCore.Qt.AlignTop)
+        self.setLayout(self.hbox)
+        self.slid = QtGui.QSlider(QtCore.Qt.Horizontal)
+        if dtype is int:
+            self.spin = QtGui.QSpinBox()
+            self.slid.setRange(int(minlim), int(maxlim))
+            self.spin.setRange(int(minlim), int(maxlim))
+            self.slid.valueChanged.connect(self.spin.setValue)
+            self.spin.valueChanged.connect(self.slid.setValue)
+        else:
+            self.spin = QtGui.QDoubleSpinBox()
+            self.spin.setSingleStep(0.01)
+            # Stretch slider
+            self.slid.setRange(minlim, minlim + (maxlim - minlim) * self.mult)
+            self.spin.setRange(minlim, maxlim)
+            print(minlim + (maxlim - minlim) * self.mult)
+            self.slid.valueChanged.connect(self.notifyIntValueChanged)
+            self.spin.valueChanged.connect(self.notifyDoubleValueChanged)
+        self.hbox.addWidget(self.slid)
+        self.hbox.addWidget(self.spin)
+        
+    @QtCore.Slot(float)
+    def notifyDoubleValueChanged(self, value):
+        """Emulate double slider."""
+        self.slid.setValue(value * self.mult)
+    
+    @QtCore.Slot(int)
+    def notifyIntValueChanged(self, value):
+        """This is from spinbox to slider."""
+        self.spin.setValue(value / self.mult)
+
+
 class MicroscopeControl(QtGui.QWidget):
     """Control microscope devices.
     """
@@ -34,11 +76,12 @@ class MicroscopeControl(QtGui.QWidget):
         self.vbox = QtGui.QVBoxLayout(self.parent)
         self.vbox.setAlignment(QtCore.Qt.AlignTop)
         self.setLayout(self.vbox)
-        self.grid = QtGui.QGridLayout()
         self.titl_camn = QtGui.QLabel('Camera name')
         self.titl_magn = QtGui.QLabel('Objective magnification')
         self.titl_expo = QtGui.QLabel('Exposure, ms')
         self.titl_gain = QtGui.QLabel('Gain')
+        self.adju_expo = AdjustBar(minlim=1, maxlim=2000, dtype=int, parent=self)
+        self.adju_gain = AdjustBar(minlim=1.0, maxlim=4.0, dtype=float, parent=self)
         
         self.slid_expo = QtGui.QSlider(QtCore.Qt.Horizontal)
         self.slid_gain = QtGui.QSlider(QtCore.Qt.Horizontal)
@@ -51,13 +94,10 @@ class MicroscopeControl(QtGui.QWidget):
         self.vbox.addWidget(self.titl_magn)
         self.vbox.addWidget(self.comb_magn)
         
-        self.grid.addWidget(self.titl_expo, 1, 1)
-        self.grid.addWidget(self.slid_expo, 2, 1)
-        self.grid.addWidget(self.spin_expo, 2, 2)
-        self.grid.addWidget(self.titl_gain, 3, 1)
-        self.grid.addWidget(self.slid_gain, 4, 1)
-        self.grid.addWidget(self.spin_gain, 4, 2)
-        self.vbox.addLayout(self.grid)
+        self.vbox.addWidget(self.titl_expo)
+        self.vbox.addWidget(self.adju_expo)
+        self.vbox.addWidget(self.titl_gain)
+        self.vbox.addWidget(self.adju_gain)
         
         # Set camera name
         self.titl_camn.setText(
@@ -202,6 +242,7 @@ class VideoProcessor(QtCore.QThread):
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
-    window = MicroscopeControl()
+#     window = AdjustBar(minlim=0, maxlim=2000, dtype=int)
+    window = AdjustBar(minlim=0.0, maxlim=4.0, dtype=float)
     window.show()
     app.exec_()
