@@ -20,6 +20,7 @@ from PySide import QtGui
 from PySide import QtOpenGL
 from OpenGL.GL import *
 from OpenGL import ERROR_ON_COPY
+import iptools
 
 ERROR_ON_COPY = True  # Raise exception on array copy or casting
 # http://pyopengl.sourceforge.net/documentation/opengl_diffs.html
@@ -79,39 +80,31 @@ class MicroscopeControl(QtGui.QWidget):
         self.vbox = QtGui.QVBoxLayout(self.parent)
         self.vbox.setAlignment(QtCore.Qt.AlignTop)
         self.setLayout(self.vbox)
-        self.titl_camn = QtGui.QLabel('Camera name')
         self.titl_magn = QtGui.QLabel('Objective magnification')
-        self.titl_expo = QtGui.QLabel('Exposure, ms')
-        self.titl_gain = QtGui.QLabel('Gain')
-        self.adju_expo = AdjustBar(minlim=1, maxlim=2000, dtype=int, parent=self)
-        self.adju_gain = AdjustBar(minlim=1.0, maxlim=4.0, dtype=float, parent=self)
-        
-        self.slid_expo = QtGui.QSlider(QtCore.Qt.Horizontal)
-        self.slid_gain = QtGui.QSlider(QtCore.Qt.Horizontal)
-        self.spin_expo = QtGui.QSpinBox()
-        self.spin_gain = QtGui.QSpinBox()
         self.comb_magn = QtGui.QComboBox()
-#         self.comb_reso = QtGui.QComboBox()
-        
-        self.vbox.addWidget(self.titl_camn)
         self.vbox.addWidget(self.titl_magn)
         self.vbox.addWidget(self.comb_magn)
         
-        self.vbox.addWidget(self.titl_expo)
-        self.vbox.addWidget(self.adju_expo)
-        self.vbox.addWidget(self.titl_gain)
-        self.vbox.addWidget(self.adju_gain)
-        
-        # Set camera name
-        self.titl_camn.setText(
-            self.parent.mmc.getDeviceDescription(
-                self.parent.mmc.getCameraDevice()))
+        # Set appropriate camera control widgets.
+        camname = self.parent.mmc.getCameraDevice()
+        needed_prop = set(self.parent.mmc.getDevicePropertyNames(camname)) & set(('Exposure', 'Gain'))
+        for prop in needed_prop:
+            if not self.parent.mmc.isPropertyReadOnly(camname, prop) & \
+                self.parent.mmc.isPropertySequenceable(camname, prop):
+                self.vbox.addWidget(QtGui.QLabel(prop))
+                self.vbox.addWidget(AdjustBar(
+                    minlim=self.parent.mmc.getPropertyLowerLimit(camname, prop),
+                    maxlim=self.parent.mmc.getPropertyUpperLimit(camname, prop),
+                    dtype=iptools.get_prop_type(self.parent.mmc, camname, prop),
+                    parent=self))
         
         # Get scales and set default.
         self.comb_magn.addItems(self.parent.CMicro.get_all_scalenames())
         self.comb_magn.setCurrentIndex(
             self.comb_magn.findText(self.parent.CMicro.scalename))
         self.comb_magn.currentIndexChanged.connect(self.change_scalename)
+        
+        
     
     @QtCore.Slot(int)
     def change_scalename(self, index):
