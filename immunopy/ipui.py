@@ -34,7 +34,7 @@ class AdjustBar(QtGui.QWidget):
     def __init__(self, minlim, maxlim, dtype, parent=None):
         super(AdjustBar, self).__init__(parent)
         self.parent = parent
-        self.mult = 100.0
+        self.mult = 1000.0
         self.maxlim = maxlim
         self.minlim = minlim
         
@@ -50,22 +50,22 @@ class AdjustBar(QtGui.QWidget):
             self.spin.valueChanged.connect(self.slid.setValue)
         else:
             self.spin = QtGui.QDoubleSpinBox()
-            self.spin.setSingleStep(0.1)
+            self.spin.setSingleStep(0.01)
             # Stretch slider
             self.slid.setRange(minlim, (self.maxlim - self.minlim) * self.mult + self.minlim)
             self.spin.setRange(minlim, maxlim)
-            self.slid.valueChanged.connect(self.notifyIntValueChanged)
-            self.spin.valueChanged.connect(self.notifyDoubleValueChanged)
+            self.slid.valueChanged.connect(self.setAsDouble)
+            self.spin.valueChanged.connect(self.setAsInt)
         self.hbox.addWidget(self.slid)
         self.hbox.addWidget(self.spin)
         
     @QtCore.Slot(float)
-    def notifyDoubleValueChanged(self, value):
+    def setAsInt(self, value):
         target = (value - self.minlim) * self.mult + self.minlim
         self.slid.setValue(target)
     
     @QtCore.Slot(int)
-    def notifyIntValueChanged(self, value):
+    def setAsDouble(self, value):
         target = (value - self.minlim) / self.mult + self.minlim
         self.spin.setValue(target)
 
@@ -245,7 +245,7 @@ class VideoProcessor(QtCore.QThread):
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
-#     window = AdjustBar(minlim=0, maxlim=2000, dtype=int)
-    window = AdjustBar(minlim=0.0, maxlim=4.0, dtype=float)
+    window = AdjustBar(minlim=0, maxlim=2000, dtype=int)
+#     window = AdjustBar(minlim=-1.0, maxlim=1.0, dtype=float)
     window.show()
     app.exec_()
