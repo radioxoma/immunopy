@@ -29,32 +29,36 @@ ERROR_ON_COPY = True  # Raise exception on array copy or casting
 class AdjustBar(QtGui.QWidget):
     """Slider and spinbox widget.
     
-    dtype - Data type of MM property value: int or float.
-    BUG: precision is not enough.
+    BUG: precision sometimes is not enough.
     """
-    def __init__(self, minlim, maxlim, dtype, parent=None):
+    def __init__(self, mmcore, prop, parent=None):
         super(AdjustBar, self).__init__(parent)
         self.parent = parent
+        self.mmc = mmcore
+        self.prop = prop
         self.mult = 1000.0
-        self.maxlim = maxlim
-        self.minlim = minlim
+        self.camname = self.mmc.getCameraDevice()
+        self.minlim=self.mmc.getPropertyLowerLimit(self.camname, prop)
+        self.maxlim=self.mmc.getPropertyUpperLimit(self.camname, prop)
         
         self.hbox = QtGui.QHBoxLayout(self.parent)
         # self.hbox.setAlignment(QtCore.Qt.AlignTop)
         self.setLayout(self.hbox)
         self.slid = QtGui.QSlider(QtCore.Qt.Horizontal)
-        if dtype is int:
+        if iptools.get_prop_dtype(self.mmc, self.camname, prop) is int:
             self.spin = QtGui.QSpinBox()
-            self.slid.setRange(int(minlim), int(maxlim))
-            self.spin.setRange(int(minlim), int(maxlim))
+            self.slid.setRange(int(self.minlim), int(self.maxlim))
+            self.spin.setRange(int(self.minlim), int(self.maxlim))
             self.slid.valueChanged.connect(self.spin.setValue)
             self.spin.valueChanged.connect(self.slid.setValue)
+            self.slid.valueChanged.connect(self.setDevProperty)
         else:
             self.spin = QtGui.QDoubleSpinBox()
             self.spin.setSingleStep(0.01)
             # Stretch slider
-            self.slid.setRange(minlim, (self.maxlim - self.minlim) * self.mult + self.minlim)
-            self.spin.setRange(minlim, maxlim)
+            self.slid.setRange(self.minlim,
+                (self.maxlim - self.minlim) * self.mult + self.minlim)
+            self.spin.setRange(self.minlim, self.maxlim)
             self.slid.valueChanged.connect(self.setAsDouble)
             self.spin.valueChanged.connect(self.setAsInt)
         self.hbox.addWidget(self.slid)
@@ -63,12 +67,20 @@ class AdjustBar(QtGui.QWidget):
     @QtCore.Slot(float)
     def setAsInt(self, value):
         target = (value - self.minlim) * self.mult + self.minlim
-        self.slid.setValue(target)
+        if self.slid.value() != target:
+            self.slid.setValue(target)
+            self.setDevProperty(value)
     
     @QtCore.Slot(int)
     def setAsDouble(self, value):
-        target = (value - self.minlim) / self.mult + self.minlim
-        self.spin.setValue(target)
+        current = round(self.spin.value(), 2)
+        target = round((value - self.minlim) / self.mult + self.minlim, 2)
+        if current != target:
+            self.spin.setValue(target)
+    
+    @QtCore.Slot()
+    def setDevProperty(self, value):
+        self.mmc.setProperty(self.camname, self.prop, str(value))
 
 
 class MicroscopeControl(QtGui.QWidget):
@@ -92,19 +104,13 @@ class MicroscopeControl(QtGui.QWidget):
             if not self.parent.mmc.isPropertyReadOnly(camname, prop) & \
                 self.parent.mmc.isPropertySequenceable(camname, prop):
                 self.vbox.addWidget(QtGui.QLabel(prop))
-                self.vbox.addWidget(AdjustBar(
-                    minlim=self.parent.mmc.getPropertyLowerLimit(camname, prop),
-                    maxlim=self.parent.mmc.getPropertyUpperLimit(camname, prop),
-                    dtype=iptools.get_prop_type(self.parent.mmc, camname, prop),
-                    parent=self))
+                self.vbox.addWidget(AdjustBar(self.parent.mmc, prop, self))
         
         # Get scales and set default.
         self.comb_magn.addItems(self.parent.CMicro.get_all_scalenames())
         self.comb_magn.setCurrentIndex(
             self.comb_magn.findText(self.parent.CMicro.scalename))
         self.comb_magn.currentIndexChanged.connect(self.change_scalename)
-        
-        
     
     @QtCore.Slot(int)
     def change_scalename(self, index):

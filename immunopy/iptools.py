@@ -545,3 +545,21 @@ def autofocus():
     В оригинале статьи про watershed была функция для проверки фокусировки.
     """
     pass
+
+
+def get_prop_dtype(mmcore, devlabel, prop):
+    """Get allowed property datatype.
+    
+    Not implemented in MMCorePy.
+    """
+    t = mmcore.getPropertyType(devlabel, prop)
+    if t == 0:  # Undef probably
+        return None
+    elif t == 1:  # String
+        return str
+    elif t == 2:  # Float
+        return float
+    elif t == 3:  # Integer
+        return int
+    else:
+        raise ValueError("Unexpected property type '%s'" % t)

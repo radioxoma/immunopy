@@ -18,6 +18,7 @@ MM_CONFIGURATION_NAME = "MMConfig_dcam.cfg"
 MM_CIRCULAR_BUFFER = 100
 DEF_OBJECTIVE = '10'
 
+
 class MainWindow(QtGui.QMainWindow):
     """Main GUI window.
     """
