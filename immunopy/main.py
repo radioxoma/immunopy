@@ -31,10 +31,12 @@ class MainWindow(QtGui.QMainWindow):
         self.mmc.setCircularBufferMemoryFootprint(MM_CIRCULAR_BUFFER)
         
         self.CMicro = iptools.CalibMicro(DEF_OBJECTIVE)
+        self.VProc = ipui.VideoProcessor(mmcore=self.mmc)
         self.MControl = ipui.MicroscopeControl(parent=self)
         self.AControl = ipui.AnalysisControl(parent=self)
-        self.GLWiget = ipui.GLFrame(width=640, height=480)
-        self.GLWiget.setFixedSize(640, 480)  # Temporary
+        self.GLWiget = ipui.GLFrame(width=512, height=512)
+        self.GLWiget.setMinimumSize(640, 480)
+        #self.GLWiget.setFixedSize(640, 480)  # Temporary
         self.setCentralWidget(self.GLWiget)
         self.setWindowTitle('Immunopy')
         
@@ -46,6 +48,15 @@ class MainWindow(QtGui.QMainWindow):
         self.dock.setWidget(self.toolbox)
         self.addDockWidget(
             QtCore.Qt.DockWidgetArea(QtCore.Qt.LeftDockWidgetArea), self.dock)
+        
+        self.VProc.connect(QtCore.SIGNAL('NewFrame()'), self.updateFrame)
+    
+    @QtCore.Slot()
+    def updateFrame(self):
+        self.GLWiget.setData(self.VProc.rgb)
+    
+    def onExit(self):
+        self.mmc.reset()
 
 
 if __name__ == '__main__':
