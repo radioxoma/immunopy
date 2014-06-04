@@ -117,13 +117,16 @@ class MicroscopeControl(QtGui.QWidget):
             self.comb_magn.findText(self.parent.CMicro.scalename))
         self.comb_magn.currentIndexChanged.connect(self.change_scalename)
         
-        self.btn_strt.pressed.connect(self.parent.VProc.start)
-        self.btn_stop.pressed.connect(self.parent.VProc.stop)
+        self.btn_strt.pressed.connect(self.parent.VProc.start_acquisition, type=QtCore.Qt.DirectConnection)
+        self.btn_stop.pressed.connect(self.parent.VProc.stop_acquisition, type=QtCore.Qt.DirectConnection)
+        self.btn_strt.pressed.connect(self.parent.WorkTimer, QtCore.SLOT('start()'))
+        self.btn_stop.pressed.connect(self.parent.WorkTimer, QtCore.SLOT('stop()'))
     
     @QtCore.Slot(int)
     def change_scalename(self, index):
         self.parent.CMicro.scalename = str(self.comb_magn.currentText())
-        
+
+
 class AnalysisControl(QtGui.QWidget):
     """Control image analysis workflow.
     """
@@ -206,49 +209,43 @@ class GLFrame(QtOpenGL.QGLWidget):
         self.updateGL()
 
 
-class VideoProcessor(QtCore.QThread):
+class VideoProcessor(QtCore.QObject):
     """Get frames."""
     def __init__(self, mmcore, parent=None):
         super(VideoProcessor, self).__init__()
         self.parent = parent
         self.mmc = mmcore
-        self.timer = QtCore.QTimer(self)
-        self.timer.setInterval(20)
-        self.timer.setSingleShot(True)
-        
-        
         self.rgb32 = None
         self.rgb = None
-        
-    def run(self):
-        self.running = True
+
+    @QtCore.Slot()
+    def process_frame(self):
+        print('process_frame')
+        start_time = time.time()
+        if self.mmc.getRemainingImageCount() > 0:
+            start_time = time.time()
+            # self.rgb32 = mmc.popNextImage()
+            self.rgb32 = self.mmc.getLastImage()
+            print(self.rgb32.shape)
+            self.rgb = self.rgb32.view(dtype=np.uint8).reshape(
+                self.rgb32.shape[0], self.rgb32.shape[1], 4)[..., 2:: -1]
+            self.emit(QtCore.SIGNAL('NewFrame()'))
+            print('GET frame')
+        else:
+            print('No frame')
+        print('FPS: %f') % (1. / (time.time() - start_time))
+
+    @QtCore.Slot()
+    def start_acquisition(self):
+        print('Initicalize cameera.')
         self.mmc.snapImage()  # Avoid Baumer bug
         self.mmc.startContinuousSequenceAcquisition(1)
-        
-        start_time = time.time()
-        while self.running is True:
-            if self.mmc.getRemainingImageCount() > 0:
-                start_time = time.time()
-                # self.rgb32 = mmc.popNextImage()
-                self.rgb32 = self.mmc.getLastImage()
-                print(self.rgb32.shape)
-                self.rgb = self.rgb32.view(dtype=np.uint8).reshape(
-                    self.rgb32.shape[0], self.rgb32.shape[1], 4)[..., 2:: -1]
-                self.emit(QtCore.SIGNAL('NewFrame()'))
-                print('GET frame')
-            else:
-                print('No frame')
-            time.sleep(0.020)
-#             self.mmc.sleep(20)
-            print('FPS: %f') % (1. / (time.time() - start_time))
 
+    @QtCore.Slot()
+    def stop_acquisition(self):
         self.mmc.stopSequenceAcquisition()
         print('Video acquisition terminated.')
         # self.emit(QtCore.SIGNAL('CamReleased'))  # taskDone() may be better
-    
-    @QtCore.Slot()    
-    def stop(self):
-        self.running = False
 
 
 if __name__ == '__main__':

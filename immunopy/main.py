@@ -29,12 +29,21 @@ class MainWindow(QtGui.QMainWindow):
         self.mmc.enableDebugLog(False)
         self.mmc.loadSystemConfiguration(MM_CONFIGURATION_NAME)
         self.mmc.setCircularBufferMemoryFootprint(MM_CIRCULAR_BUFFER)
-        
         self.CMicro = iptools.CalibMicro(DEF_OBJECTIVE)
+        
+        self.WorkThread = QtCore.QThread()
+        self.WorkTimer = QtCore.QTimer(None)
+        self.WorkTimer.setInterval(20)
         self.VProc = ipui.VideoProcessor(mmcore=self.mmc)
+        self.WorkTimer.timeout.connect(
+            self.VProc.process_frame, type=QtCore.Qt.DirectConnection)
+        self.VProc.moveToThread(self.WorkThread)
+#         self.WorkTimer.moveToThread(self.WorkThread)
+        
         self.MControl = ipui.MicroscopeControl(parent=self)
         self.AControl = ipui.AnalysisControl(parent=self)
-        self.GLWiget = ipui.GLFrame(width=512, height=512)
+        self.GLWiget = ipui.GLFrame(
+            width=self.mmc.getImageWidth(), height=self.mmc.getImageHeight())
         self.GLWiget.setMinimumSize(640, 480)
         #self.GLWiget.setFixedSize(640, 480)  # Temporary
         self.setCentralWidget(self.GLWiget)
@@ -55,7 +64,7 @@ class MainWindow(QtGui.QMainWindow):
     def updateFrame(self):
         self.GLWiget.setData(self.VProc.rgb)
     
-    def onExit(self):
+    def shutdown(self):
         self.mmc.reset()
 
 
