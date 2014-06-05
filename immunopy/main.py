@@ -63,17 +63,24 @@ class MainWindow(QtGui.QMainWindow):
         self.WorkTimer.timeout.connect(self.VProc.process_frame)
         
         self.VProc.newframe.connect(self.updateFrame)
-        
-    
+
+
     @QtCore.Slot()
     def updateFrame(self):
         self.GLWiget.setData(self.VProc.rgb)
     
+    @QtCore.Slot()
     def shutdown(self):
+        """Switch off all stuff and exit."""
         self.WorkThread.quit()
         if self.WorkThread.isRunning():
             self.WorkThread.wait()
         self.mmc.reset()
+
+    def closeEvent(self, event):
+        print('Shutdown safely...')
+        self.shutdown()
+        event.accept()
 
 
 if __name__ == '__main__':
