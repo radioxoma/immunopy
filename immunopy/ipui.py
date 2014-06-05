@@ -117,10 +117,9 @@ class MicroscopeControl(QtGui.QWidget):
             self.comb_magn.findText(self.parent.CMicro.scalename))
         self.comb_magn.currentIndexChanged.connect(self.change_scalename)
         
-        self.btn_strt.pressed.connect(self.parent.VProc.start_acquisition, type=QtCore.Qt.DirectConnection)
-        self.btn_stop.pressed.connect(self.parent.VProc.stop_acquisition, type=QtCore.Qt.DirectConnection)
-        self.btn_strt.pressed.connect(self.parent.WorkTimer, QtCore.SLOT('start()'))
-        self.btn_stop.pressed.connect(self.parent.WorkTimer, QtCore.SLOT('stop()'))
+        self.btn_strt.pressed.connect(self.parent.WorkThread.start)
+        self.btn_stop.pressed.connect(self.parent.WorkThread.quit)
+
     
     @QtCore.Slot(int)
     def change_scalename(self, index):
@@ -211,6 +210,8 @@ class GLFrame(QtOpenGL.QGLWidget):
 
 class VideoProcessor(QtCore.QObject):
     """Get frames."""
+    newframe = QtCore.Signal()
+    
     def __init__(self, mmcore, parent=None):
         super(VideoProcessor, self).__init__()
         self.parent = parent
@@ -229,7 +230,7 @@ class VideoProcessor(QtCore.QObject):
             print(self.rgb32.shape)
             self.rgb = self.rgb32.view(dtype=np.uint8).reshape(
                 self.rgb32.shape[0], self.rgb32.shape[1], 4)[..., 2:: -1]
-            self.emit(QtCore.SIGNAL('NewFrame()'))
+            self.newframe.emit()
             print('GET frame')
         else:
             print('No frame')

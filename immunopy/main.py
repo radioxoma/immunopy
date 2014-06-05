@@ -35,8 +35,6 @@ class MainWindow(QtGui.QMainWindow):
         self.WorkTimer = QtCore.QTimer(None)
         self.WorkTimer.setInterval(20)
         self.VProc = ipui.VideoProcessor(mmcore=self.mmc)
-        self.WorkTimer.timeout.connect(
-            self.VProc.process_frame, type=QtCore.Qt.DirectConnection)
         self.VProc.moveToThread(self.WorkThread)
 #         self.WorkTimer.moveToThread(self.WorkThread)
         
@@ -58,13 +56,23 @@ class MainWindow(QtGui.QMainWindow):
         self.addDockWidget(
             QtCore.Qt.DockWidgetArea(QtCore.Qt.LeftDockWidgetArea), self.dock)
         
-        self.VProc.connect(QtCore.SIGNAL('NewFrame()'), self.updateFrame)
+        self.WorkThread.started.connect(self.WorkTimer.start)
+        self.WorkThread.started.connect(self.VProc.start_acquisition)
+        self.WorkThread.finished.connect(self.WorkTimer.stop)
+        self.WorkThread.finished.connect(self.VProc.stop_acquisition)
+        self.WorkTimer.timeout.connect(self.VProc.process_frame)
+        
+        self.VProc.newframe.connect(self.updateFrame)
+        
     
     @QtCore.Slot()
     def updateFrame(self):
         self.GLWiget.setData(self.VProc.rgb)
     
     def shutdown(self):
+        self.WorkThread.quit()
+        if self.WorkThread.isRunning():
+            self.WorkThread.wait()
         self.mmc.reset()
 
 
