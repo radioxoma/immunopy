@@ -29,6 +29,7 @@ ERROR_ON_COPY = True  # Raise exception on array copy or casting
 class AdjustBar(QtGui.QWidget):
     """Slider and spinbox widget.
     
+    The spinboxes always contain real property value.
     BUG: precision sometimes is not enough.
     """
     def __init__(self, mmcore, prop, parent=None):
@@ -49,6 +50,7 @@ class AdjustBar(QtGui.QWidget):
             self.spin = QtGui.QSpinBox()
             self.slid.setRange(int(self.minlim), int(self.maxlim))
             self.spin.setRange(int(self.minlim), int(self.maxlim))
+            self.spin.setValue(int(self.mmc.getProperty(self.camname, prop)))
             self.slid.valueChanged.connect(self.spin.setValue)
             self.spin.valueChanged.connect(self.slid.setValue)
             self.slid.valueChanged.connect(self.setDevProperty)
@@ -59,6 +61,7 @@ class AdjustBar(QtGui.QWidget):
             self.slid.setRange(self.minlim,
                 (self.maxlim - self.minlim) * self.mult + self.minlim)
             self.spin.setRange(self.minlim, self.maxlim)
+            self.spin.setValue(float(self.mmc.getProperty(self.camname, prop)))
             self.slid.valueChanged.connect(self.setAsDouble)
             self.spin.valueChanged.connect(self.setAsInt)
         self.hbox.addWidget(self.slid)
@@ -73,6 +76,7 @@ class AdjustBar(QtGui.QWidget):
     
     @QtCore.Slot(int)
     def setAsDouble(self, value):
+        print('InDouble')
         current = round(self.spin.value(), 2)
         target = round((value - self.minlim) / self.mult + self.minlim, 2)
         if current != target:
