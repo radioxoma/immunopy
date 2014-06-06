@@ -178,7 +178,6 @@ class GLFrame(QtOpenGL.QGLWidget):
         """Replace old texture data and show it on screen.
         """
         # print('paintGL')
-        # Place new texture data
         # Prevent segfault: glTexSubImage would not accept None.
         if self._tex_data is not None:
             glTexSubImage2D(
@@ -189,6 +188,7 @@ class GLFrame(QtOpenGL.QGLWidget):
         glClearColor(0.4, 0.1, 0.1, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glEnable(GL_TEXTURE_2D)
+        
         glBegin(GL_QUADS)
         glTexCoord2f(0, 1); glVertex3f(-1, -1, -1)
         glTexCoord2f(1, 1); glVertex3f(1, -1, -1)
@@ -238,11 +238,13 @@ class VideoProcessor(QtCore.QObject):
             print('GET frame')
         else:
             print('No frame')
-        print('FPS: %f') % (1. / (time.time() - start_time))
+        delta_time = time.time() - start_time
+        if delta_time != 0:
+            print('FPS: %f') % (1. / (time.time() - start_time))
 
     @QtCore.Slot()
     def start_acquisition(self):
-        print('Initicalize cameera.')
+        print('Initialize camera.')
         self.mmc.snapImage()  # Avoid Baumer bug
         self.mmc.startContinuousSequenceAcquisition(1)
 
