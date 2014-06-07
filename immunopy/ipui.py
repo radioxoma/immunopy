@@ -61,7 +61,9 @@ class AdjustBar(QtGui.QWidget):
             self.slid.setRange(self.minlim,
                 (self.maxlim - self.minlim) * self.mult + self.minlim)
             self.spin.setRange(self.minlim, self.maxlim)
-            self.spin.setValue(float(self.mmc.getProperty(self.camname, prop)))
+            # Prevent comma on Linux.
+            self.spin.setValue(float(
+                self.mmc.getProperty(self.camname, prop).replace(',', '.')))
             self.slid.valueChanged.connect(self.setAsDouble)
             self.spin.valueChanged.connect(self.setAsInt)
         self.hbox.addWidget(self.slid)
