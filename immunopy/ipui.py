@@ -78,7 +78,6 @@ class AdjustBar(QtGui.QWidget):
     
     @QtCore.Slot(int)
     def setAsDouble(self, value):
-        print('InDouble')
         current = round(self.spin.value(), 2)
         target = round((value - self.minlim) / self.mult + self.minlim, 2)
         if current != target:
@@ -134,16 +133,40 @@ class MicroscopeControl(QtGui.QWidget):
 
 class AnalysisControl(QtGui.QWidget):
     """Control image analysis workflow.
+    
+    Cell segmentation controls.
     """
     def __init__(self, parent=None):
         super(AnalysisControl, self).__init__(parent)
         self.parent = parent
-        self.vbox = QtGui.QVBoxLayout(self.parent)
-        self.vbox.setAlignment(QtCore.Qt.AlignTop)
-        self.setLayout(self.vbox)
+#         self.vbox = QtGui.QVBoxLayout(self.parent)
+#         self.vbox.setAlignment(QtCore.Qt.AlignTop)
+#         self.setLayout(self.vbox)
         
-        self.titl_none = QtGui.QLabel('Not implemented')
-        self.vbox.addWidget(self.titl_none)
+        self.form = QtGui.QFormLayout()
+#         self.form.setFormAlignment(QtCore.Qt.AlignRight)
+        self.setLayout(self.form)
+#         self.setLayoutDirection(QtCore.Qt.RightToLeft)
+        
+        self.sizemax = QtGui.QSpinBox()
+        self.sizemax.setSuffix(' px')
+        self.sizemax.setRange(0, 9999)
+        self.form.addRow(QtGui.QLabel('Max size'), self.sizemax)
+        
+        self.sizemin = QtGui.QSpinBox()
+        self.sizemin.setSuffix(' px')
+        self.sizemin.setRange(0, 9999)
+        self.form.addRow(QtGui.QLabel('Min size'), self.sizemin)
+        
+        self.peak_dist = QtGui.QSpinBox()
+        self.peak_dist.setSuffix(' px')
+        self.peak_dist.setRange(0, 9999)
+        self.form.addRow(QtGui.QLabel('Peak distance'), self.peak_dist)
+        
+        self.shift_th = QtGui.QSpinBox()
+        self.shift_th.setSuffix(' %')
+        self.shift_th.setRange(-100, 100)
+        self.form.addRow(QtGui.QLabel('Shift threshold'), self.shift_th)
 
 
 class GLFrame(QtOpenGL.QGLWidget):
@@ -232,17 +255,14 @@ class VideoProcessor(QtCore.QObject):
 
     @QtCore.Slot()
     def process_frame(self):
-        print('process_frame')
         start_time = time.time()
         if self.mmc.getRemainingImageCount() > 0:
             start_time = time.time()
             # self.rgb32 = mmc.popNextImage()
             self.rgb32 = self.mmc.getLastImage()
-            print(self.rgb32.shape)
             self.rgb = self.rgb32.view(dtype=np.uint8).reshape(
                 self.rgb32.shape[0], self.rgb32.shape[1], 4)[..., 2:: -1]
             self.newframe.emit()
-            print('GET frame')
         else:
             print('No frame')
         delta_time = time.time() - start_time
