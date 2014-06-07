@@ -147,21 +147,64 @@ class AnalysisControl(QtGui.QWidget):
 
 
 class GLFrame(QtOpenGL.QGLWidget):
-    """Video output Qt widget based on OpenGL.
-    
-    Put image to texture and show it with OpenGL.
+    """OpenGL based video output Qt widget.
+
+    Put RGB image to texture and show it with OpenGL.
     """
-    def __init__(self, width, height):
+    def __init__(self):
         super(GLFrame, self).__init__()
-        self._tex_width, self._tex_height = width, height
         self._tex_data = None
-    
+        self._texture_id = None
+        self.rect = QtCore.QRectF(QtCore.QPointF(-1, -1), QtCore.QPointF(1, 1))
+
     def initializeGL(self):
-        """Create an empty texture with uninitialized data.
+        glClearColor(0.4, 0.1, 0.1, 1.0)
+        glEnable(GL_TEXTURE_2D)
+
+    def paintGL(self):
+        """Replace old texture data and show it on screen.
         """
-#         print('initializeGL')
-        texture_id = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D, texture_id)
+        if self._texture_id is not None:
+            # glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            self.drawTexture(self.rect, self._texture_id)
+            # glBegin(GL_QUADS)
+            # glTexCoord2f(0, 1); glVertex3f(-1, -1, -1)
+            # glTexCoord2f(1, 1); glVertex3f(1, -1, -1)
+            # glTexCoord2f(1, 0); glVertex3f(1, 1, -1)
+            # glTexCoord2f(0, 0); glVertex3f(-1, 1, -1)
+            # glEnd()
+
+    def resizeGL(self, width, height):
+        self.view_width, self.view_height = width, height
+        glViewport(0, 0, self.view_width, self.view_height)
+
+    def setData(self, array):
+        """Set numpy array as new texture to widget.
+        """
+        # self.makeCurrent()
+        if self._tex_data is not None:
+            if self._tex_data.shape == array.shape:
+                self._tex_data = array
+                # Prevent segfault: glTexSubImage would not accept None.
+                glTexSubImage2D(
+                    GL_TEXTURE_2D, 0, 0, 0,
+                    self._tex_data.shape[1], self._tex_data.shape[0],
+                    GL_RGB, GL_UNSIGNED_BYTE, self._tex_data)
+            else:
+                self.deleteTexture(self._texture_id)
+                self.createTex(array)
+        else:
+            self.createTex(array)
+        self.updateGL()
+
+    def createTex(self, array):
+        """Create texture object for given RGB array.
+        """
+        self.makeCurrent()
+        self._tex_data = array
+        # Prepare an empty texture.
+        self._texture_id = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, self._texture_id)
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
         # Установим параметры "оборачивания" текстуры
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP)
@@ -169,49 +212,11 @@ class GLFrame(QtOpenGL.QGLWidget):
         # Linear filtering (?)
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        # Prepare an empty texture.
+
         glTexImage2D(
             GL_TEXTURE_2D, 0, GL_RGB,
-            self._tex_width, self._tex_height,
+            self._tex_data.shape[1], self._tex_data.shape[0],
             0, GL_RGB, GL_UNSIGNED_BYTE, self._tex_data)
-        # glDeleteTextures(1, texture_id)
-
-    def paintGL(self):
-        """Replace old texture data and show it on screen.
-        """
-        # print('paintGL')
-        # Prevent segfault: glTexSubImage would not accept None.
-        if self._tex_data is not None:
-            glTexSubImage2D(
-                GL_TEXTURE_2D, 0, 0, 0,
-                self._tex_width, self._tex_height,
-                GL_RGB, GL_UNSIGNED_BYTE, self._tex_data)
-
-        glClearColor(0.4, 0.1, 0.1, 1.0)
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glEnable(GL_TEXTURE_2D)
-        
-        glBegin(GL_QUADS)
-        glTexCoord2f(0, 1); glVertex3f(-1, -1, -1)
-        glTexCoord2f(1, 1); glVertex3f(1, -1, -1)
-        glTexCoord2f(1, 0); glVertex3f(1, 1, -1)
-        glTexCoord2f(0, 0); glVertex3f(-1, 1, -1)
-        glEnd()
-        # glDisable(GL_TEXTURE_2D)
-
-    def resizeGL(self, width, height):
-#         print('resizeGL')
-        self.view_width, self.view_height = width, height
-        glViewport(0, 0, self.view_width, self.view_height)
-
-    def setData(self, array):
-        """Set numpy array as new texture to wiget.
-        
-        Numpy array must be same shape as previous texture.
-        """
-        assert((self._tex_height, self._tex_width) == array.shape[:2])
-        self._tex_data = array
-        self.updateGL()
 
 
 class VideoProcessor(QtCore.QObject):

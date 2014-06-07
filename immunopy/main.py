@@ -40,8 +40,7 @@ class MainWindow(QtGui.QMainWindow):
         
         self.MControl = ipui.MicroscopeControl(parent=self)
         self.AControl = ipui.AnalysisControl(parent=self)
-        self.GLWiget = ipui.GLFrame(
-            width=self.mmc.getImageWidth(), height=self.mmc.getImageHeight())
+        self.GLWiget = ipui.GLFrame()
         self.GLWiget.setMinimumSize(640, 480)
         #self.GLWiget.setFixedSize(640, 480)  # Temporary
         self.setCentralWidget(self.GLWiget)
