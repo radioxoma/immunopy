@@ -149,24 +149,33 @@ class AnalysisControl(QtGui.QWidget):
         self.setLayout(self.form)
 #         self.setLayoutDirection(QtCore.Qt.RightToLeft)
         
+        self.vtype = QtGui.QSpinBox()
+        self.vtype.setRange(-1, 3)
+        self.vtype.setValue(self.parent.VProc.CProcessor.vtype)
+        self.form.addRow(QtGui.QLabel('VizType'), self.vtype)
+        
         self.sizemax = QtGui.QSpinBox()
         self.sizemax.setSuffix(' px')
         self.sizemax.setRange(0, 9999)
+        self.sizemax.setValue(self.parent.VProc.CProcessor.max_size)
         self.form.addRow(QtGui.QLabel('Max size'), self.sizemax)
         
         self.sizemin = QtGui.QSpinBox()
         self.sizemin.setSuffix(' px')
         self.sizemin.setRange(0, 9999)
+        self.sizemin.setValue(self.parent.VProc.CProcessor.min_size)
         self.form.addRow(QtGui.QLabel('Min size'), self.sizemin)
         
         self.peak_dist = QtGui.QSpinBox()
         self.peak_dist.setSuffix(' px')
         self.peak_dist.setRange(0, 9999)
+        self.peak_dist.setValue(self.parent.VProc.CProcessor.peak_distance)
         self.form.addRow(QtGui.QLabel('Peak distance'), self.peak_dist)
         
         self.shift_th = QtGui.QSpinBox()
         self.shift_th.setSuffix(' %')
         self.shift_th.setRange(-100, 100)
+        self.shift_th.setValue(self.parent.VProc.CProcessor.threshold_shift)
         self.form.addRow(QtGui.QLabel('Shift threshold'), self.shift_th)
 
 

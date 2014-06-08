@@ -64,6 +64,14 @@ class MainWindow(QtGui.QMainWindow):
         
         self.VProc.newframe.connect(self.updateFrame)
         self.CMicro.scale_changed.connect(self.VProc.setScale)
+        
+        self.AControl.vtype.valueChanged.connect(self.VProc.setVtype)
+        self.AControl.sizemax.valueChanged.connect(self.VProc.setMaxSize)
+        self.AControl.sizemin.valueChanged.connect(self.VProc.setMinSize)
+        self.AControl.peak_dist.valueChanged.connect(self.VProc.setPeakDistance)
+        self.AControl.shift_th.valueChanged.connect(self.VProc.setThresholdShift)
+        
+        
 
 
     @QtCore.Slot()
