@@ -15,11 +15,12 @@ from skimage.morphology import watershed
 from skimage.color import separate_stains, hdx_from_rgb
 from skimage.feature import peak_local_max
 import cv2
+from PySide import QtCore
 
 import lut
 
 
-class CalibMicro(object):
+class CalibMicro(QtCore.QObject):
     """Microscope objective calibration and size conversion.
 
     Instance it with default objective name (e.g. '20').
@@ -30,6 +31,8 @@ class CalibMicro(object):
         * Use binning
         * Check 100 magnification
     """
+    
+    scale_changed = QtCore.Signal(float)
 
     def __init__(self, objective_name):
         """Objective _scales (um/px) from Leica Acquisition Suite *.cal.xml
@@ -62,6 +65,7 @@ class CalibMicro(object):
             raise ValueError('Unknown microscope objective name')
         self._curr_scale = self._scales[value]
         self._curr_scalename = value
+        self.scale_changed.emit(self._curr_scale)
             
     def um2px(self, um, scale=None):
         """Convert um to pixel line."""
@@ -101,6 +105,14 @@ class CellProcessor(object):
         self.blur = 2
         self.colormap = colormap
         self.pool = pool
+
+    @property
+    def scale(self):
+        return self._scale
+    @scale.setter
+    def scale(self, value):
+        assert(isinstance(value, float))
+        self._scale = value
 
     @property
     def vtype(self):

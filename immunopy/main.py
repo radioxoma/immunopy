@@ -34,7 +34,7 @@ class MainWindow(QtGui.QMainWindow):
         self.WorkThread = QtCore.QThread()
         self.WorkTimer = QtCore.QTimer(None)
         self.WorkTimer.setInterval(20)
-        self.VProc = ipui.VideoProcessor(mmcore=self.mmc)
+        self.VProc = ipui.VideoProcessor(mmcore=self.mmc, parent=self)
         self.VProc.moveToThread(self.WorkThread)
 #         self.WorkTimer.moveToThread(self.WorkThread)
         
@@ -62,6 +62,7 @@ class MainWindow(QtGui.QMainWindow):
         self.WorkTimer.timeout.connect(self.VProc.process_frame)
         
         self.VProc.newframe.connect(self.updateFrame)
+        self.CMicro.scale_changed.connect(self.VProc.setScale)
 
 
     @QtCore.Slot()

@@ -21,6 +21,7 @@ from PySide import QtOpenGL
 from OpenGL.GL import *
 from OpenGL import ERROR_ON_COPY
 import iptools
+import lut
 
 ERROR_ON_COPY = True  # Raise exception on array copy or casting
 # http://pyopengl.sourceforge.net/documentation/opengl_diffs.html
@@ -250,6 +251,8 @@ class VideoProcessor(QtCore.QObject):
         super(VideoProcessor, self).__init__()
         self.parent = parent
         self.mmc = mmcore
+        self.CProcessor = iptools.CellProcessor(
+            scale=parent.CMicro.scale, colormap=lut.random_jet())
         self.rgb32 = None
         self.rgb = None
 
@@ -280,7 +283,10 @@ class VideoProcessor(QtCore.QObject):
         self.mmc.stopSequenceAcquisition()
         print('Video acquisition terminated.')
         # self.emit(QtCore.SIGNAL('CamReleased'))  # taskDone() may be better
-
+    
+    @QtCore.Slot()
+    def setScale(self, value):
+        self.CProcessor.scale = value
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
