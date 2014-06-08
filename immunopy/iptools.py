@@ -26,8 +26,6 @@ class CalibMicro(QtCore.QObject):
     Instance it with default objective name (e.g. '20').
 
     TODO:
-        * Use properties
-        * Handle _scales as class attributes
         * Use binning
         * Check 100 magnification
     """
@@ -53,6 +51,7 @@ class CalibMicro(QtCore.QObject):
     def scale(self):
         """Get current scale."""
         return self._curr_scale
+
     @property
     def scalename(self):
         """Get current scalename (objective name)."""
@@ -92,7 +91,10 @@ class CalibMicro(QtCore.QObject):
 
 
 class CellProcessor(object):
-    """Segment and visualize cell image."""
+    """Segment and visualize cell image.
+    
+    Accept RGB image, return statistics and visualization.
+    """
     def __init__(self, scale, colormap, pool=None):
         super(CellProcessor, self).__init__()
         self.threshold_shift = 20
@@ -113,6 +115,7 @@ class CellProcessor(object):
     def scale(self, value):
         assert(isinstance(value, float))
         self._scale = value
+        print('Scale changed %s') % self.scale
 
     @property
     def vtype(self):
@@ -157,15 +160,15 @@ class CellProcessor(object):
         """
 
         rgb = image.copy()
-        # Коррекция освещённости
+        # Shading correction
 
-        # Размытие
+        # Enhancement
         meaned = cv2.blur(rgb, (self.blur, self.blur))
 
-        # Масштаб
+        # Resize to fixed scale 
         scaled = rescale(meaned, self.scale)
 
-        # Разделение красителей
+        # Unmix stains
         hdx = separate_stains(scaled, hdx_from_rgb)
         hem = hdx[:,:,0]
         dab = hdx[:,:,1]
@@ -471,7 +474,7 @@ def draw_masks(srcrgb, red, blue):
     np.copyto(bgr[:,:,0], 255, where=mask.view(dtype=np.bool8))
     """
     rgb = srcrgb.copy()
-    # Заменяет все пикселы определённым цветом по маске. Маска псевдотрёхмерная.
+    # Replaces all pixels with specifed color by mask. Mask is faked-3d.
     np.copyto(
         rgb, np.array([0,0,255], dtype=np.uint8),
         where=blue.astype(dtype=np.bool8)[:,:,None])

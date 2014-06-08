@@ -9,16 +9,17 @@ Created on 2014-05-28
 
 import numpy as np
 from scipy import misc
+import MMCorePy
 
 
-class CMMCore(object):
+class CMMCore(MMCorePy.CMMCore):
     """Fake Micro-manager RGB32 camera.
     """
     def __init__(self):
         super(CMMCore, self).__init__()
-        # self.RGB = ndimage.imread('image/hdab256.tif')
-        self.RGB = misc.imread('image/Ki6720x_blue_filter.tif')
-#         self.RGB = ndimage.imread('image/2px_um.tif')
+        self.RGB = misc.imread('image/hdab256.tif')
+#         self.RGB = misc.imread('image/Ki6720x_blue_filter.tif')
+#         self.RGB = misc.imread('image/2px_um.tif')
         self.BGR = self.RGB[:,:,::-1]
         self.BGRA = np.dstack((self.BGR, np.zeros((self.BGR.shape[0], self.BGR.shape[1]), dtype=np.uint8)))
         self.RGB32 = self.BGRA.view(dtype=np.uint32)

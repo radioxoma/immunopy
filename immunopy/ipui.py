@@ -253,8 +253,10 @@ class VideoProcessor(QtCore.QObject):
         self.mmc = mmcore
         self.CProcessor = iptools.CellProcessor(
             scale=parent.CMicro.scale, colormap=lut.random_jet())
+#         self.CProcessor.vtype = -1
         self.rgb32 = None
         self.rgb = None
+        self.out = None
 
     @QtCore.Slot()
     def process_frame(self):
@@ -263,8 +265,12 @@ class VideoProcessor(QtCore.QObject):
             start_time = time.time()
             # self.rgb32 = mmc.popNextImage()
             self.rgb32 = self.mmc.getLastImage()
-            self.rgb = self.rgb32.view(dtype=np.uint8).reshape(
-                self.rgb32.shape[0], self.rgb32.shape[1], 4)[..., 2:: -1]
+            self.rgb = iptools.rgb32asrgb(self.rgb32)
+            # Return as is, if processing not needed.
+            if self.CProcessor.vtype == -1:
+                self.out = self.rgb
+            else:
+                self.out = self.CProcessor.process(self.rgb)
             self.newframe.emit()
         else:
             print('No frame')
@@ -285,8 +291,29 @@ class VideoProcessor(QtCore.QObject):
         # self.emit(QtCore.SIGNAL('CamReleased'))  # taskDone() may be better
     
     @QtCore.Slot()
+    def setVtype(self, value):
+        self.CProcessor.vtype = value
+    
+    @QtCore.Slot()
     def setScale(self, value):
         self.CProcessor.scale = value
+    
+    @QtCore.Slot()
+    def setThresholdShift(self, value):
+        self.CProcessor.threshold_shift = value
+
+    @QtCore.Slot()
+    def setMinSize(self, value):
+        self.CProcessor.min_size = value
+
+    @QtCore.Slot()
+    def setMaxSize(self, value):
+        self.CProcessor.max_size = value
+
+    @QtCore.Slot()
+    def setPeakDistance(self, value):
+        self.CProcessor.peak_distance = value
+
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)

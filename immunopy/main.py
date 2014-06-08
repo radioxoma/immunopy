@@ -12,7 +12,7 @@ from PySide import QtCore
 from PySide import QtGui
 import ipui
 import iptools
-import MMCorePy
+import MMCorePyExperimental as MMCorePy
 
 MM_CONFIGURATION_NAME = "MMConfig_dcam.cfg"
 MM_CIRCULAR_BUFFER = 100
@@ -35,8 +35,9 @@ class MainWindow(QtGui.QMainWindow):
         self.WorkTimer = QtCore.QTimer(None)
         self.WorkTimer.setInterval(20)
         self.VProc = ipui.VideoProcessor(mmcore=self.mmc, parent=self)
+        # Both must be in same thread, otherwise signals may be missing.
         self.VProc.moveToThread(self.WorkThread)
-#         self.WorkTimer.moveToThread(self.WorkThread)
+        self.WorkTimer.moveToThread(self.WorkThread)
         
         self.MControl = ipui.MicroscopeControl(parent=self)
         self.AControl = ipui.AnalysisControl(parent=self)
@@ -67,7 +68,7 @@ class MainWindow(QtGui.QMainWindow):
 
     @QtCore.Slot()
     def updateFrame(self):
-        self.GLWiget.setData(self.VProc.rgb)
+        self.GLWiget.setData(self.VProc.out)
     
     @QtCore.Slot()
     def shutdown(self):
