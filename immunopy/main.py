@@ -70,9 +70,6 @@ class MainWindow(QtGui.QMainWindow):
         self.AControl.sizemin.valueChanged.connect(self.VProc.setMinSize)
         self.AControl.peak_dist.valueChanged.connect(self.VProc.setPeakDistance)
         self.AControl.shift_th.valueChanged.connect(self.VProc.setThresholdShift)
-        
-        
-
 
     @QtCore.Slot()
     def updateFrame(self):

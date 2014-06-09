@@ -46,7 +46,7 @@ def set_vtype(value):
 
 if __name__ == '__main__':
     CMicro = iptools.CalibMicro(MAGNIFICATION)
-    SCALE = CMicro.um2px(1)
+    SCALE = CMicro.scale
     POOL = Pool(processes=2)
     CProcessor = iptools.CellProcessor(scale=SCALE, colormap=lut.random_jet(), pool=POOL)
     print('curscale %f') % CMicro.scale

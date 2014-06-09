@@ -42,14 +42,12 @@ class CalibMicro(QtCore.QObject):
                        '20': 2.2857120535736084E-01,
                        '63': 7.2562287415035193E-02,
                        '100': 4.571E-02}
-        # self.scale = None
         self.binning = 1
         self.scalename = objective_name  # objective name
-#         self.roi = (2048, 1536)
 
     @property
     def scale(self):
-        """Get current scale."""
+        """Get current scale px/um."""
         return self._curr_scale
 
     @property
@@ -64,15 +62,15 @@ class CalibMicro(QtCore.QObject):
             raise ValueError('Unknown microscope objective name')
         self._curr_scale = self._scales[value]
         self._curr_scalename = value
-        self.scale_changed.emit(self._curr_scale)
+        self.scale_changed.emit(self.scale)
             
     def um2px(self, um, scale=None):
         """Convert um to pixel line."""
-        return um / self.scale
+        return um / self._curr_scale
 
     def px2um(self, um, scale=None):
         """Convert pixel line to um."""
-        return um * self.scale
+        return um * self._curr_scale
 
     def um2circle(self, diameter):
         """Диаметр (um) в площадь эквивалентного круга в px."""
@@ -310,7 +308,7 @@ def rescale(source, scale):
     if scale == 2.0:  # pixels per um
         return source
     else:
-        scl_factor = 2.0 / scale
+        scl_factor = 2.0 * scale
         fy = int(round(source.shape[0] * scl_factor))
         fx = int(round(source.shape[1] * scl_factor))
         # cv2.INTER_CUBIC

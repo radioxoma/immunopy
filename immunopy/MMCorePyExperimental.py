@@ -17,8 +17,8 @@ class CMMCore(MMCorePy.CMMCore):
     """
     def __init__(self):
         super(CMMCore, self).__init__()
-        self.RGB = misc.imread('image/hdab256.tif')
-#         self.RGB = misc.imread('image/Ki6720x_blue_filter.tif')
+#         self.RGB = misc.imread('image/hdab256.tif')
+        self.RGB = misc.imread('image/Ki6720x_blue_filter.tif')
 #         self.RGB = misc.imread('image/2px_um.tif')
         self.BGR = self.RGB[:,:,::-1]
         self.BGRA = np.dstack((self.BGR, np.zeros((self.BGR.shape[0], self.BGR.shape[1]), dtype=np.uint8)))
