@@ -189,6 +189,7 @@ class GLFrame(QtOpenGL.QGLWidget):
         self._tex_data = None
         self._texture_id = None
         self.rect = QtCore.QRectF(QtCore.QPointF(-1, -1), QtCore.QPointF(1, 1))
+        self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
 
     def initializeGL(self):
         glClearColor(0.4, 0.1, 0.1, 1.0)
@@ -208,8 +209,12 @@ class GLFrame(QtOpenGL.QGLWidget):
             # glEnd()
 
     def resizeGL(self, width, height):
-        self.view_width, self.view_height = width, height
-        glViewport(0, 0, self.view_width, self.view_height)
+        """Keep aspect ratio in viewport.
+        """
+        glViewport(0, 0, width, height)
+        new_size = QtCore.QSize(self.baseSize())
+        new_size.scale(QtCore.QSize(width, height), QtCore.Qt.KeepAspectRatio)
+        self.resize(new_size)
 
     def setData(self, array):
         """Set numpy array as new texture to widget.
@@ -226,8 +231,10 @@ class GLFrame(QtOpenGL.QGLWidget):
             else:
                 self.deleteTexture(self._texture_id)
                 self.createTex(array)
+                self.setBaseSize(array.shape[1], array.shape[0])
         else:
             self.createTex(array)
+            self.setBaseSize(array.shape[1], array.shape[0])
         self.updateGL()
 
     def createTex(self, array):

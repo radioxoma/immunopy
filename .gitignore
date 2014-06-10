@@ -3,3 +3,5 @@
 *.settings
 *.project
 *.pydevproject
+
+[Cc]ore[Ll]og*.txt
