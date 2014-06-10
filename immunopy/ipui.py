@@ -43,9 +43,9 @@ class AdjustBar(QtGui.QWidget):
         self.minlim=self.mmc.getPropertyLowerLimit(self.camname, prop)
         self.maxlim=self.mmc.getPropertyUpperLimit(self.camname, prop)
         
-        self.hbox = QtGui.QHBoxLayout(self.parent)
+        self.vbox = QtGui.QVBoxLayout(self.parent)
+        self.form = QtGui.QFormLayout()
         # self.hbox.setAlignment(QtCore.Qt.AlignTop)
-        self.setLayout(self.hbox)
         self.slid = QtGui.QSlider(QtCore.Qt.Horizontal)
         if iptools.get_prop_dtype(self.mmc, self.camname, prop) is int:
             self.spin = QtGui.QSpinBox()
@@ -67,8 +67,12 @@ class AdjustBar(QtGui.QWidget):
                 self.mmc.getProperty(self.camname, prop).replace(',', '.')))
             self.slid.valueChanged.connect(self.setAsDouble)
             self.spin.valueChanged.connect(self.setAsInt)
-        self.hbox.addWidget(self.slid)
-        self.hbox.addWidget(self.spin)
+        
+        self.form.addRow(QtGui.QLabel(prop), self.spin)
+        self.setLayout(self.vbox)
+        self.vbox.addLayout(self.form)                    
+        self.vbox.addWidget(self.slid)
+        
         
     @QtCore.Slot(float)
     def setAsInt(self, value):
@@ -114,7 +118,6 @@ class MicroscopeControl(QtGui.QWidget):
         for prop in needed_prop:
             if not self.parent.mmc.isPropertyReadOnly(camname, prop) & \
                 self.parent.mmc.isPropertySequenceable(camname, prop):
-                self.vbox.addWidget(QtGui.QLabel(prop))
                 self.vbox.addWidget(AdjustBar(self.parent.mmc, prop, self))
         
         # Get scales and set default.
@@ -189,8 +192,7 @@ class GLFrame(QtOpenGL.QGLWidget):
         self._tex_data = None
         self._texture_id = None
         self.rect = QtCore.QRectF(QtCore.QPointF(-1, -1), QtCore.QPointF(1, 1))
-        self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
-
+        
     def initializeGL(self):
         glClearColor(0.4, 0.1, 0.1, 1.0)
         glEnable(GL_TEXTURE_2D)
@@ -232,9 +234,13 @@ class GLFrame(QtOpenGL.QGLWidget):
                 self.deleteTexture(self._texture_id)
                 self.createTex(array)
                 self.setBaseSize(array.shape[1], array.shape[0])
+                winsize = self.size()
+                self.resizeGL(winsize.width(), winsize.height())
         else:
             self.createTex(array)
             self.setBaseSize(array.shape[1], array.shape[0])
+            winsize = self.size()
+            self.resizeGL(winsize.width(), winsize.height())
         self.updateGL()
 
     def createTex(self, array):
