@@ -63,6 +63,7 @@ class MainWindow(QtGui.QMainWindow):
         self.WorkTimer.timeout.connect(self.VProc.process_frame)
         
         self.VProc.newframe.connect(self.updateFrame)
+        self.VProc.histogramready.connect(self.MControl.setHistogram)
         self.CMicro.scale_changed.connect(self.VProc.setScale)
         
         self.AControl.vtype.valueChanged.connect(self.VProc.setVtype)

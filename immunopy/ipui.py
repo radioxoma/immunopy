@@ -119,6 +119,10 @@ class MicroscopeControl(QtGui.QWidget):
             if not self.parent.mmc.isPropertyReadOnly(camname, prop) & \
                 self.parent.mmc.isPropertySequenceable(camname, prop):
                 self.vbox.addWidget(AdjustBar(self.parent.mmc, prop, self))
+        self.histview = QtGui.QLabel('Histogram')
+        self.histview.setAlignment(QtCore.Qt.AlignCenter)
+        self.histview.setMinimumSize(256, 50)
+        self.vbox.addWidget(self.histview)
         
         # Get scales and set default.
         self.comb_magn.addItems(self.parent.CMicro.get_all_scalenames())
@@ -128,11 +132,16 @@ class MicroscopeControl(QtGui.QWidget):
         
         self.btn_strt.pressed.connect(self.parent.WorkThread.start)
         self.btn_stop.pressed.connect(self.parent.WorkThread.quit)
-
-    
+        
     @QtCore.Slot(int)
     def change_scalename(self, index):
         self.parent.CMicro.scalename = str(self.comb_magn.currentText())
+    
+    @QtCore.Slot()
+    def setHistogram(self):
+        img = self.parent.VProc.hist
+        image = QtGui.QImage(img, img.shape[1], img.shape[0], QtGui.QImage.Format_ARGB32)
+        self.histview.setPixmap(QtGui.QPixmap(image))
 
 
 class AnalysisControl(QtGui.QWidget):
@@ -268,6 +277,7 @@ class GLFrame(QtOpenGL.QGLWidget):
 class VideoProcessor(QtCore.QObject):
     """Get frames."""
     newframe = QtCore.Signal()
+    histogramready = QtCore.Signal()
     
     def __init__(self, mmcore, parent=None):
         super(VideoProcessor, self).__init__()
@@ -276,6 +286,7 @@ class VideoProcessor(QtCore.QObject):
         self.CProcessor = iptools.CellProcessor(
             scale=parent.CMicro.scale, colormap=lut.random_jet())
 #         self.CProcessor.vtype = -1
+        self.HPlotter = iptools.HistogramPlotter(gradient=True)
         self.rgb32 = None
         self.rgb = None
         self.out = None
@@ -288,6 +299,8 @@ class VideoProcessor(QtCore.QObject):
             # self.rgb32 = mmc.popNextImage()
             self.rgb32 = self.mmc.getLastImage()
             self.rgb = iptools.rgb32asrgb(self.rgb32)
+            self.hist = self.HPlotter.plot(self.rgb)
+            self.histogramready.emit()
             # Return as is, if processing not needed.
             if self.CProcessor.vtype == -1:
                 self.out = self.rgb

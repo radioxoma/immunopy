@@ -88,6 +88,48 @@ class CalibMicro(QtCore.QObject):
         return sorted(self._scales.iterkeys(), key=self._scales.__getitem__, reverse=True)
 
 
+class HistogramPlotter(object):
+    """Plot histogram from RGB images."""
+    def __init__(self, width=256, height=100, gradient=False):
+        super(HistogramPlotter, self).__init__()
+        self.width = width
+        self.height = height
+        self.blank = np.zeros((height, width, 4), dtype=np.uint8)
+        if gradient:
+            self.gradient = np.linspace(0, 256, width, endpoint=False).astype(np.uint8)
+        else:
+            self.gradient = None
+
+    def plot(self, rgb):
+        """Return RGBA32 histogram.
+        """
+        rgba = self.blank.copy()
+        histr = np.bincount(rgb[...,0].ravel()).astype(np.float32)
+        histg = np.bincount(rgb[...,1].ravel()).astype(np.float32)
+        histb = np.bincount(rgb[...,2].ravel()).astype(np.float32)
+        if self.gradient is not None:
+            for k, c in enumerate(histr / histr.max() * self.height):
+                rgba[self.height-c:,k,0] = self.gradient[k]
+                rgba[self.height-c:,k,3] = 255.
+            for k, c in enumerate(histg / histg.max() * self.height):
+                rgba[self.height-c:,k,1] = self.gradient[k]
+                rgba[self.height-c:,k,3] = 255.
+            for k, c in enumerate(histb / histb.max() * self.height):
+                rgba[self.height-c:,k,2] = self.gradient[k]
+                rgba[self.height-c:,k,3] = 255.
+        else:
+            for k, c in enumerate(histr / histr.max() * self.height):
+                rgba[self.height-c:,k,0] = 255.
+                rgba[self.height-c:,k,3] = 150.
+            for k, c in enumerate(histg / histg.max() * self.height):
+                rgba[self.height-c:,k,1] = 255.
+                rgba[self.height-c:,k,3] = 150.
+            for k, c in enumerate(histb / histb.max() * self.height):
+                rgba[self.height-c:,k,2] = 255.
+                rgba[self.height-c:,k,3] = 150.
+        return rgba
+
+
 class CellProcessor(object):
     """Segment and visualize cell image.
     
