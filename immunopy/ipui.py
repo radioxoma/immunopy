@@ -93,12 +93,13 @@ class AdjustBar(QtGui.QWidget):
         self.mmc.setProperty(self.camname, self.prop, str(value))
 
 
-class MicroscopeControl(QtGui.QWidget):
+class MicroscopeControl(QtGui.QGroupBox):
     """Control microscope devices.
     """
     def __init__(self, parent=None):
         super(MicroscopeControl, self).__init__(parent)
         self.parent = parent
+        self.setTitle('Microscope control')
         self.vbox = QtGui.QVBoxLayout(self.parent)
         self.vbox.setAlignment(QtCore.Qt.AlignTop)
         self.setLayout(self.vbox)
@@ -144,7 +145,7 @@ class MicroscopeControl(QtGui.QWidget):
         self.histview.setPixmap(QtGui.QPixmap(image))
 
 
-class AnalysisControl(QtGui.QWidget):
+class AnalysisControl(QtGui.QGroupBox):
     """Control image analysis workflow.
     
     Cell segmentation controls.
@@ -152,6 +153,7 @@ class AnalysisControl(QtGui.QWidget):
     def __init__(self, parent=None):
         super(AnalysisControl, self).__init__(parent)
         self.parent = parent
+        self.setTitle('Analysis control')
 #         self.vbox = QtGui.QVBoxLayout(self.parent)
 #         self.vbox.setAlignment(QtCore.Qt.AlignTop)
 #         self.setLayout(self.vbox)

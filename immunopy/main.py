@@ -48,11 +48,12 @@ class MainWindow(QtGui.QMainWindow):
         self.setWindowTitle('Immunopy')
         
         self.dock = QtGui.QDockWidget('Ground control', parent=self)
-        self.toolbox = QtGui.QToolBox()
-        self.toolbox.addItem(self.MControl, 'Microscope control')
-        self.toolbox.addItem(self.AControl, 'Analysis control')
-        
-        self.dock.setWidget(self.toolbox)
+        self.dockcontainer = QtGui.QWidget()
+        self.dockvbox = QtGui.QVBoxLayout()
+        self.dockcontainer.setLayout(self.dockvbox)
+        self.dockvbox.addWidget(self.MControl)
+        self.dockvbox.addWidget(self.AControl)
+        self.dock.setWidget(self.dockcontainer)
         self.addDockWidget(
             QtCore.Qt.DockWidgetArea(QtCore.Qt.LeftDockWidgetArea), self.dock)
         
