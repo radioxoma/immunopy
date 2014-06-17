@@ -68,7 +68,7 @@ class AdjustBar(QtGui.QWidget):
             self.slid.valueChanged.connect(self.setAsDouble)
             self.spin.valueChanged.connect(self.setAsInt)
         
-        self.form.addRow(QtGui.QLabel(prop), self.spin)
+        self.form.addRow(prop, self.spin)
         self.setLayout(self.vbox)
         self.vbox.addLayout(self.form)                    
         self.vbox.addWidget(self.slid)
@@ -95,48 +95,86 @@ class AdjustBar(QtGui.QWidget):
 
 class MicroscopeControl(QtGui.QGroupBox):
     """Control microscope devices.
+    
+    Aware hardcode for properties is better way.
     """
     def __init__(self, parent=None):
         super(MicroscopeControl, self).__init__(parent)
         self.parent = parent
         self.setTitle('Microscope control')
+
         self.vbox = QtGui.QVBoxLayout(self.parent)
-        self.vbox.setAlignment(QtCore.Qt.AlignTop)
         self.setLayout(self.vbox)
         
-        self.btn_strt = QtGui.QPushButton('Start')
-        self.btn_stop = QtGui.QPushButton('Stop')
-        self.titl_magn = QtGui.QLabel('Objective magnification')
-        self.comb_magn = QtGui.QComboBox()
-        self.vbox.addWidget(self.btn_strt)
-        self.vbox.addWidget(self.btn_stop)
-        self.vbox.addWidget(self.titl_magn)
-        self.vbox.addWidget(self.comb_magn)
+        self.form = QtGui.QFormLayout()
+        self.in_vbox = QtGui.QVBoxLayout(self.parent)
+        self.vbox.addLayout(self.form)
+        self.vbox.addLayout(self.in_vbox)
         
-        # Set appropriate camera control widgets.
-        camname = self.parent.mmc.getCameraDevice()
-        needed_prop = set(self.parent.mmc.getDevicePropertyNames(camname)) & set(('Exposure', 'Gain'))
-        for prop in needed_prop:
-            if not self.parent.mmc.isPropertyReadOnly(camname, prop) & \
-                self.parent.mmc.isPropertySequenceable(camname, prop):
-                self.vbox.addWidget(AdjustBar(self.parent.mmc, prop, self))
+        self.streaming_btn = QtGui.QPushButton('Start')
+        self.form.addRow('Streaming', self.streaming_btn)
+        self.streaming_btn.pressed.connect(self.toggle_streaming)
+        
+        # Get scales and set default.
+        self.objective = QtGui.QComboBox()
+        self.objective.addItems(self.parent.CMicro.get_all_scalenames())
+        self.objective.setCurrentIndex(
+            self.objective.findText(self.parent.CMicro.scalename))
+        self.form.addRow('Objective', self.objective)
+        self.objective.currentIndexChanged.connect(self.change_scalename)
+
+        self.camname = self.parent.mmc.getCameraDevice()
+        self.exposure = QtGui.QSpinBox()
+        self.exposure.setSuffix(' ms')
+        self.exposure.setRange(
+            self.parent.mmc.getPropertyLowerLimit(self.camname, 'Exposure'),
+            self.parent.mmc.getPropertyUpperLimit(self.camname, 'Exposure'))
+        self.exposure.setValue(self.parent.mmc.getExposure())
+        self.exposure.valueChanged.connect(self.parent.mmc.setExposure)
+        self.form.addRow('Exposure', self.exposure)
+        
+        self.gain = QtGui.QDoubleSpinBox()
+        self.gain.setSingleStep(0.1)
+        self.gain.setRange(
+            self.parent.mmc.getPropertyLowerLimit(self.camname, 'Gain'),
+            self.parent.mmc.getPropertyUpperLimit(self.camname, 'Gain'))
+        self.gain.setValue(float(self.parent.mmc.getProperty(self.camname, 'Gain')))
+        self.gain.valueChanged.connect(self.set_gain)
+        self.form.addRow('Gain', self.gain)
+        
+        self.binning = QtGui.QComboBox()
+        self.binning.addItems(self.parent.mmc.getAllowedPropertyValues(self.camname, 'Binning'))
+        self.binning.setCurrentIndex(                         
+            self.binning.findText(self.parent.mmc.getProperty(self.camname, 'Binning')))
+        self.binning.currentIndexChanged.connect(self.set_binning)
+        self.form.addRow('Binning', self.binning)
+        
         self.histview = QtGui.QLabel('Histogram')
         self.histview.setAlignment(QtCore.Qt.AlignCenter)
         self.histview.setMinimumSize(256, 50)
-        self.vbox.addWidget(self.histview)
-        
-        # Get scales and set default.
-        self.comb_magn.addItems(self.parent.CMicro.get_all_scalenames())
-        self.comb_magn.setCurrentIndex(
-            self.comb_magn.findText(self.parent.CMicro.scalename))
-        self.comb_magn.currentIndexChanged.connect(self.change_scalename)
-        
-        self.btn_strt.pressed.connect(self.parent.WorkThread.start)
-        self.btn_stop.pressed.connect(self.parent.WorkThread.quit)
-        
+        self.in_vbox.addWidget(self.histview)
+    
+    @QtCore.Slot()
+    def toggle_streaming(self):
+        if not self.parent.WorkThread.isRunning():
+            self.parent.WorkThread.start()
+            self.streaming_btn.setText('Stop')
+        else:
+            self.streaming_btn.setText('Start')
+            self.parent.WorkThread.quit()
+    
     @QtCore.Slot(int)
     def change_scalename(self, index):
-        self.parent.CMicro.scalename = str(self.comb_magn.currentText())
+        self.parent.CMicro.scalename = str(self.objective.currentText())
+    
+    @QtCore.Slot(float)
+    def set_gain(self, value):
+        self.parent.mmc.setProperty(self.camname, 'Gain', str(value))
+        
+    @QtCore.Slot(int)
+    def set_binning(self, index):
+        value = self.binning.itemText(index)
+        self.parent.mmc.setProperty(self.camname, 'Binning', str(value))
     
     @QtCore.Slot()
     def setHistogram(self):
@@ -166,31 +204,31 @@ class AnalysisControl(QtGui.QGroupBox):
         self.vtype = QtGui.QSpinBox()
         self.vtype.setRange(-1, 3)
         self.vtype.setValue(self.parent.VProc.CProcessor.vtype)
-        self.form.addRow(QtGui.QLabel('VizType'), self.vtype)
+        self.form.addRow('VizType', self.vtype)
         
         self.sizemax = QtGui.QSpinBox()
         self.sizemax.setSuffix(' px')
         self.sizemax.setRange(0, 9999)
         self.sizemax.setValue(self.parent.VProc.CProcessor.max_size)
-        self.form.addRow(QtGui.QLabel('Max size'), self.sizemax)
+        self.form.addRow('Max size', self.sizemax)
         
         self.sizemin = QtGui.QSpinBox()
         self.sizemin.setSuffix(' px')
         self.sizemin.setRange(0, 9999)
         self.sizemin.setValue(self.parent.VProc.CProcessor.min_size)
-        self.form.addRow(QtGui.QLabel('Min size'), self.sizemin)
+        self.form.addRow('Min size', self.sizemin)
         
         self.peak_dist = QtGui.QSpinBox()
         self.peak_dist.setSuffix(' px')
         self.peak_dist.setRange(0, 9999)
         self.peak_dist.setValue(self.parent.VProc.CProcessor.peak_distance)
-        self.form.addRow(QtGui.QLabel('Peak distance'), self.peak_dist)
+        self.form.addRow('Peak distance', self.peak_dist)
         
         self.shift_th = QtGui.QSpinBox()
         self.shift_th.setSuffix(' %')
         self.shift_th.setRange(-100, 100)
         self.shift_th.setValue(self.parent.VProc.CProcessor.threshold_shift)
-        self.form.addRow(QtGui.QLabel('Shift threshold'), self.shift_th)
+        self.form.addRow('Shift threshold', self.shift_th)
 
 
 class GLFrame(QtOpenGL.QGLWidget):
