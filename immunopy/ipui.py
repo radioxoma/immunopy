@@ -202,7 +202,7 @@ class AnalysisControl(QtGui.QGroupBox):
 #         self.setLayoutDirection(QtCore.Qt.RightToLeft)
         
         self.vtype = QtGui.QSpinBox()
-        self.vtype.setRange(-1, 3)
+        self.vtype.setRange(0, 3)
         self.vtype.setValue(self.parent.VProc.CProcessor.vtype)
         self.form.addRow('VizType', self.vtype)
         
@@ -325,7 +325,6 @@ class VideoProcessor(QtCore.QObject):
         self.mmc = mmcore
         self.CProcessor = iptools.CellProcessor(
             scale=parent.CMicro.scale, colormap=lut.random_jet())
-#         self.CProcessor.vtype = -1
         self.HPlotter = iptools.HistogramPlotter(gradient=True)
         self.rgb32 = None
         self.rgb = None
@@ -341,11 +340,7 @@ class VideoProcessor(QtCore.QObject):
             self.rgb = iptools.rgb32asrgb(self.rgb32)
             self.hist = self.HPlotter.plot(self.rgb)
             self.histogramready.emit()
-            # Return as is, if processing not needed.
-            if self.CProcessor.vtype == -1:
-                self.out = self.rgb
-            else:
-                self.out = self.CProcessor.process(self.rgb)
+            self.out = self.CProcessor.process(self.rgb)
             self.newframe.emit()
         else:
             print('No frame')

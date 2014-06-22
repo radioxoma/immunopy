@@ -198,7 +198,8 @@ class CellProcessor(object):
     def process(self, image):
         """Segmentation and statistical calculation.
         """
-
+        if self.vtype == 0:
+            return image
         rgb = image.copy()
         # Shading correction
 
@@ -230,9 +231,7 @@ class CellProcessor(object):
         stats3 = calc_stats_binary(hemfiltered, dabfiltered) * 100
 
         # Visualization
-        if self.vtype == 0:
-            overlay = scaled
-        elif self.vtype == 1:
+        if self.vtype == 1:
             overlay = draw_overlay(scaled, dabfiltered, hemfiltered)
         elif self.vtype == 2:
             overlay = lut.apply_lut(dabfiltered, self.colormap)
