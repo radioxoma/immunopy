@@ -192,14 +192,19 @@ class AnalysisControl(QtGui.QGroupBox):
         super(AnalysisControl, self).__init__(parent)
         self.parent = parent
         self.setTitle('Analysis control')
-#         self.vbox = QtGui.QVBoxLayout(self.parent)
-#         self.vbox.setAlignment(QtCore.Qt.AlignTop)
-#         self.setLayout(self.vbox)
+        self.vbox = QtGui.QVBoxLayout(self.parent)
+        self.vbox.setAlignment(QtCore.Qt.AlignTop)
+        self.setLayout(self.vbox)
+        self.in_vbox = QtGui.QVBoxLayout()
         
         self.form = QtGui.QFormLayout()
-#         self.form.setFormAlignment(QtCore.Qt.AlignRight)
-        self.setLayout(self.form)
-#         self.setLayoutDirection(QtCore.Qt.RightToLeft)
+        self.vbox.addLayout(self.in_vbox)
+        self.vbox.addLayout(self.form)
+        
+        self.calc_btn = QtGui.QPushButton('Analyze')
+        self.cont_cbx = QtGui.QCheckBox('Continuous analysis')
+        self.in_vbox.addWidget(self.calc_btn)
+        self.in_vbox.addWidget(self.cont_cbx)
         
         self.vtype = QtGui.QSpinBox()
         self.vtype.setRange(0, 3)
