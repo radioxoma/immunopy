@@ -157,7 +157,7 @@ class MicroscopeControl(QtGui.QGroupBox):
         self.histview.setMinimumSize(256, 50)
         self.in_vbox.addWidget(self.histview)
         
-        self.willRun.connect(self.parent.VProc.run_continuous)
+        self.willRun.connect(self.parent.VProc.runContinuous)
         self.willStop.connect(self.parent.VProc.stop)
     
     @QtCore.Slot()
@@ -194,6 +194,9 @@ class AnalysisControl(QtGui.QGroupBox):
     
     Cell segmentation controls.
     """
+    willCountOnce = QtCore.Signal()
+    willCountContinuously = QtCore.Signal()
+
     def __init__(self, parent=None):
         super(AnalysisControl, self).__init__(parent)
         self.parent = parent
@@ -208,6 +211,7 @@ class AnalysisControl(QtGui.QGroupBox):
         self.vbox.addLayout(self.form)
         
         self.calc_btn = QtGui.QPushButton('Analyze')
+        self.calc_btn.pressed.connect(self.toggle)
         self.cont_cbx = QtGui.QCheckBox('Continuous analysis')
         self.in_vbox.addWidget(self.calc_btn)
         self.in_vbox.addWidget(self.cont_cbx)
@@ -240,6 +244,17 @@ class AnalysisControl(QtGui.QGroupBox):
         self.shift_th.setRange(-100, 100)
         self.shift_th.setValue(self.parent.VProc.CProcessor.threshold_shift)
         self.form.addRow('Shift threshold', self.shift_th)
+        
+        self.willCountOnce.connect(self.parent.VProc.runOnce)
+        self.willCountContinuously.connect(self.parent.VProc.runContinuous)
+
+    def toggle(self):
+        if self.cont_cbx.checkState() == QtCore.Qt.Checked:
+            self.willCountContinuously.emit()
+        else:
+            # BUG: this will not update microscope control start-stop button.
+            # Should use signals.
+            self.willCountOnce.emit()
 
 
 class GLFrame(QtOpenGL.QGLWidget):
@@ -368,19 +383,19 @@ class VideoProcessor(QtCore.QObject):
             print('FPS: %f') % (1. / (time.time() - start_time))
 
     @QtCore.Slot()
-    def run_once(self):
+    def runOnce(self):
         print('Take one picture.')
         if self.workTimer.isActive():
-            raise RuntimeWarning('Timer must be stopped before run_once()!')
+            raise RuntimeWarning('Timer must be stopped before runOnce()!')
         self.mmc.snapImage()
         self.workTimer.setSingleShot(True)
         self.workTimer.start()
 
     @QtCore.Slot()
-    def run_continuous(self):
+    def runContinuous(self):
         print('Start taking pictures continuously')
         if self.workTimer.isActive():
-            raise RuntimeWarning('Timer must be stopped before run_continuous()!')
+            raise RuntimeWarning('Timer must be stopped before runContinuous()!')
         self.mmc.snapImage()  # Avoid Baumer bug
         self.mmc.startContinuousSequenceAcquisition(1)
         self.workTimer.setSingleShot(False)
