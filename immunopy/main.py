@@ -31,19 +31,15 @@ class MainWindow(QtGui.QMainWindow):
         self.mmc.setCircularBufferMemoryFootprint(MM_CIRCULAR_BUFFER)
         self.CMicro = iptools.CalibMicro(DEF_OBJECTIVE)
         
-        self.WorkThread = QtCore.QThread()
-        self.WorkTimer = QtCore.QTimer(None)
-        self.WorkTimer.setInterval(20)
+        self.workThread = QtCore.QThread()
         self.VProc = ipui.VideoProcessor(mmcore=self.mmc, parent=self)
-        # Both must be in same thread, otherwise signals may be missing.
-        self.VProc.moveToThread(self.WorkThread)
-        self.WorkTimer.moveToThread(self.WorkThread)
+        self.VProc.moveToThread(self.workThread)
+        self.workThread.start()
         
         self.MControl = ipui.MicroscopeControl(parent=self)
         self.AControl = ipui.AnalysisControl(parent=self)
         self.GLWiget = ipui.GLFrame()
         self.GLWiget.setMinimumSize(640, 480)
-        #self.GLWiget.setFixedSize(640, 480)  # Temporary
         self.setCentralWidget(self.GLWiget)
         self.setWindowTitle('Immunopy')
         
@@ -56,12 +52,6 @@ class MainWindow(QtGui.QMainWindow):
         self.dock.setWidget(self.dockcontainer)
         self.addDockWidget(
             QtCore.Qt.DockWidgetArea(QtCore.Qt.LeftDockWidgetArea), self.dock)
-        
-        self.WorkThread.started.connect(self.WorkTimer.start)
-        self.WorkThread.started.connect(self.VProc.start_acquisition)
-        self.WorkThread.finished.connect(self.WorkTimer.stop)
-        self.WorkThread.finished.connect(self.VProc.stop_acquisition)
-        self.WorkTimer.timeout.connect(self.VProc.process_frame)
         
         self.VProc.newframe.connect(self.updateFrame)
         self.VProc.histogramready.connect(self.MControl.setHistogram)
@@ -80,13 +70,13 @@ class MainWindow(QtGui.QMainWindow):
     @QtCore.Slot()
     def shutdown(self):
         """Switch off all stuff and exit."""
-        self.WorkThread.quit()
-        if self.WorkThread.isRunning():
-            self.WorkThread.wait()
+        if self.workThread.isRunning():
+            self.workThread.quit()
+            self.workThread.wait()
         self.mmc.reset()
+        print('Shutdown safely...')
 
     def closeEvent(self, event):
-        print('Shutdown safely...')
         self.shutdown()
         event.accept()
 

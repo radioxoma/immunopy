@@ -98,6 +98,9 @@ class MicroscopeControl(QtGui.QGroupBox):
     
     Aware hardcode for properties is better way.
     """
+    willRun = QtCore.Signal()
+    willStop = QtCore.Signal()
+
     def __init__(self, parent=None):
         super(MicroscopeControl, self).__init__(parent)
         self.parent = parent
@@ -153,15 +156,18 @@ class MicroscopeControl(QtGui.QGroupBox):
         self.histview.setAlignment(QtCore.Qt.AlignCenter)
         self.histview.setMinimumSize(256, 50)
         self.in_vbox.addWidget(self.histview)
+        
+        self.willRun.connect(self.parent.VProc.run_continuous)
+        self.willStop.connect(self.parent.VProc.stop)
     
     @QtCore.Slot()
     def toggle_streaming(self):
-        if not self.parent.WorkThread.isRunning():
-            self.parent.WorkThread.start()
+        if not self.parent.mmc.isSequenceRunning():
+            self.willRun.emit()
             self.streaming_btn.setText('Stop')
         else:
+            self.willStop.emit()
             self.streaming_btn.setText('Start')
-            self.parent.WorkThread.quit()
     
     @QtCore.Slot(int)
     def change_scalename(self, index):
@@ -320,7 +326,7 @@ class GLFrame(QtOpenGL.QGLWidget):
 
 
 class VideoProcessor(QtCore.QObject):
-    """Get frames."""
+    """Get frames and process it. Should live in separate thread."""
     newframe = QtCore.Signal()
     histogramready = QtCore.Signal()
     
@@ -334,14 +340,22 @@ class VideoProcessor(QtCore.QObject):
         self.rgb32 = None
         self.rgb = None
         self.out = None
+        
+        self.workTimer = QtCore.QTimer(parent=self)
+        self.workTimer.setInterval(20)
+        self.workTimer.timeout.connect(self.process_frame)
 
     @QtCore.Slot()
     def process_frame(self):
         start_time = time.time()
         if self.mmc.getRemainingImageCount() > 0:
             start_time = time.time()
-            # self.rgb32 = mmc.popNextImage()
-            self.rgb32 = self.mmc.getLastImage()
+            if self.workTimer.isSingleShot():
+                # Timer flag always correspond an image getting method:
+                # SingleShot for 'snapImage' and opposite for 'continuous'.
+                self.rgb32 = self.mmc.getImage()
+            else:
+                self.rgb32 = self.mmc.getLastImage()
             self.rgb = iptools.rgb32asrgb(self.rgb32)
             self.hist = self.HPlotter.plot(self.rgb)
             self.histogramready.emit()
@@ -354,16 +368,29 @@ class VideoProcessor(QtCore.QObject):
             print('FPS: %f') % (1. / (time.time() - start_time))
 
     @QtCore.Slot()
-    def start_acquisition(self):
-        print('Initialize camera.')
-        self.mmc.snapImage()  # Avoid Baumer bug
-        self.mmc.startContinuousSequenceAcquisition(1)
+    def run_once(self):
+        print('Take one picture.')
+        if self.workTimer.isActive():
+            raise RuntimeWarning('Timer must be stopped before run_once()!')
+        self.mmc.snapImage()
+        self.workTimer.setSingleShot(True)
+        self.workTimer.start()
 
     @QtCore.Slot()
-    def stop_acquisition(self):
+    def run_continuous(self):
+        print('Start taking pictures continuously')
+        if self.workTimer.isActive():
+            raise RuntimeWarning('Timer must be stopped before run_continuous()!')
+        self.mmc.snapImage()  # Avoid Baumer bug
+        self.mmc.startContinuousSequenceAcquisition(1)
+        self.workTimer.setSingleShot(False)
+        self.workTimer.start()
+
+    @QtCore.Slot()
+    def stop(self):
+        self.workTimer.stop()
         self.mmc.stopSequenceAcquisition()
         print('Video acquisition terminated.')
-        # self.emit(QtCore.SIGNAL('CamReleased'))  # taskDone() may be better
     
     @QtCore.Slot()
     def setVtype(self, value):
