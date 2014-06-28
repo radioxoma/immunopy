@@ -72,8 +72,7 @@ class AdjustBar(QtGui.QWidget):
         self.setLayout(self.vbox)
         self.vbox.addLayout(self.form)                    
         self.vbox.addWidget(self.slid)
-        
-        
+
     @QtCore.Slot(float)
     def setAsInt(self, value):
         target = (value - self.minlim) * self.mult + self.minlim
@@ -167,18 +166,18 @@ class MicroscopeControl(QtGui.QGroupBox):
     
     @QtCore.Slot()
     def toggle_streaming(self):
-        if self.cont_cbx.checkState() == QtCore.Qt.Checked:
-            if not self.parent.mmc.isSequenceRunning():
+        if not self.parent.mmc.isSequenceRunning():
+            if self.cont_cbx.checkState() == QtCore.Qt.Checked:
                 self.willRunContinuously.emit()
                 self.streaming_btn.setText('Stop')
                 self.cont_cbx.setEnabled(False)
             else:
-                self.willStop.emit()
-                self.streaming_btn.setText('Start')
-                self.cont_cbx.setEnabled(True)
+                self.willRunOnce.emit()
         else:
-            self.willRunOnce.emit()
-    
+            self.willStop.emit()
+            self.streaming_btn.setText('Start')
+            self.cont_cbx.setEnabled(True)
+
     @QtCore.Slot(int)
     def change_scalename(self, index):
         self.parent.CMicro.scalename = str(self.objective.currentText())
@@ -204,7 +203,6 @@ class AnalysisControl(QtGui.QGroupBox):
     
     Cell segmentation controls.
     """
-
     def __init__(self, parent=None):
         super(AnalysisControl, self).__init__(parent)
         self.parent = parent

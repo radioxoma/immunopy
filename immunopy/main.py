@@ -66,7 +66,7 @@ class MainWindow(QtGui.QMainWindow):
     @QtCore.Slot()
     def updateFrame(self):
         self.GLWiget.setData(self.VProc.out)
-    
+
     @QtCore.Slot()
     def shutdown(self):
         """Switch off all stuff and exit."""
