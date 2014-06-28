@@ -98,7 +98,8 @@ class MicroscopeControl(QtGui.QGroupBox):
     
     Aware hardcode for properties is better way.
     """
-    willRun = QtCore.Signal()
+    willRunOnce = QtCore.Signal()
+    willRunContinuously = QtCore.Signal()
     willStop = QtCore.Signal()
 
     def __init__(self, parent=None):
@@ -115,8 +116,11 @@ class MicroscopeControl(QtGui.QGroupBox):
         self.vbox.addLayout(self.in_vbox)
         
         self.streaming_btn = QtGui.QPushButton('Start')
-        self.form.addRow('Streaming', self.streaming_btn)
+        self.form.addRow('Acquisition', self.streaming_btn)
         self.streaming_btn.pressed.connect(self.toggle_streaming)
+        
+        self.cont_cbx = QtGui.QCheckBox()
+        self.form.addRow('Continuous', self.cont_cbx)
         
         # Get scales and set default.
         self.objective = QtGui.QComboBox()
@@ -157,17 +161,23 @@ class MicroscopeControl(QtGui.QGroupBox):
         self.histview.setMinimumSize(256, 50)
         self.in_vbox.addWidget(self.histview)
         
-        self.willRun.connect(self.parent.VProc.runContinuous)
+        self.willRunOnce.connect(self.parent.VProc.runOnce)
+        self.willRunContinuously.connect(self.parent.VProc.runContinuous)
         self.willStop.connect(self.parent.VProc.stop)
     
     @QtCore.Slot()
     def toggle_streaming(self):
-        if not self.parent.mmc.isSequenceRunning():
-            self.willRun.emit()
-            self.streaming_btn.setText('Stop')
+        if self.cont_cbx.checkState() == QtCore.Qt.Checked:
+            if not self.parent.mmc.isSequenceRunning():
+                self.willRunContinuously.emit()
+                self.streaming_btn.setText('Stop')
+                self.cont_cbx.setEnabled(False)
+            else:
+                self.willStop.emit()
+                self.streaming_btn.setText('Start')
+                self.cont_cbx.setEnabled(True)
         else:
-            self.willStop.emit()
-            self.streaming_btn.setText('Start')
+            self.willRunOnce.emit()
     
     @QtCore.Slot(int)
     def change_scalename(self, index):
@@ -194,8 +204,6 @@ class AnalysisControl(QtGui.QGroupBox):
     
     Cell segmentation controls.
     """
-    willCountOnce = QtCore.Signal()
-    willCountContinuously = QtCore.Signal()
 
     def __init__(self, parent=None):
         super(AnalysisControl, self).__init__(parent)
@@ -210,11 +218,8 @@ class AnalysisControl(QtGui.QGroupBox):
         self.vbox.addLayout(self.in_vbox)
         self.vbox.addLayout(self.form)
         
-        self.calc_btn = QtGui.QPushButton('Analyze')
-        self.calc_btn.pressed.connect(self.toggle)
-        self.cont_cbx = QtGui.QCheckBox('Continuous analysis')
-        self.in_vbox.addWidget(self.calc_btn)
-        self.in_vbox.addWidget(self.cont_cbx)
+#         self.cont_cbx = QtGui.QCheckBox()        
+#         self.form.addRow('Analyze', self.cont_cbx)
         
         self.vtype = QtGui.QSpinBox()
         self.vtype.setRange(0, 3)
@@ -244,17 +249,12 @@ class AnalysisControl(QtGui.QGroupBox):
         self.shift_th.setRange(-100, 100)
         self.shift_th.setValue(self.parent.VProc.CProcessor.threshold_shift)
         self.form.addRow('Shift threshold', self.shift_th)
-        
-        self.willCountOnce.connect(self.parent.VProc.runOnce)
-        self.willCountContinuously.connect(self.parent.VProc.runContinuous)
 
-    def toggle(self):
-        if self.cont_cbx.checkState() == QtCore.Qt.Checked:
-            self.willCountContinuously.emit()
-        else:
-            # BUG: this will not update microscope control start-stop button.
-            # Should use signals.
-            self.willCountOnce.emit()
+#     def toggle(self):
+#         if self.cont_cbx.checkState() == QtCore.Qt.Checked:
+#             pass
+#         else:
+#             pass
 
 
 class GLFrame(QtOpenGL.QGLWidget):
