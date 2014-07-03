@@ -350,6 +350,8 @@ def rescale(source, scale):
         return source
     else:
         scl_factor = 2.0 * scale
+        if scl_factor > 1:
+            print('WARNING: upscale')
         fy = int(round(source.shape[0] * scl_factor))
         fx = int(round(source.shape[1] * scl_factor))
         # cv2.INTER_CUBIC
