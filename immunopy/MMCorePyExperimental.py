@@ -32,5 +32,7 @@ class CMMCore(MMCorePy.CMMCore):
         self.frame = self.RGB32[y:y+h, x:x+w].copy()
     def getLastImage(self):
         return self.frame
+    def getImage(self):
+        return self.frame
     def popNextImage(self):
         return self.frame

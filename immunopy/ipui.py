@@ -360,25 +360,28 @@ class VideoProcessor(QtCore.QObject):
 
     @QtCore.Slot()
     def process_frame(self):
+        """Snap picture by chosen manner and process it.
+        
+        workTimer.isSingleShot flag always correspond an image getting method:
+        SingleShot for 'snapImage' and opposite for 'continuous'.
+        """
         start_time = time.time()
-        if self.mmc.getRemainingImageCount() > 0:
-            start_time = time.time()
-            if self.workTimer.isSingleShot():
-                # Timer flag always correspond an image getting method:
-                # SingleShot for 'snapImage' and opposite for 'continuous'.
-                self.rgb32 = self.mmc.getImage()
-            else:
+        if self.workTimer.isSingleShot():
+            self.rgb32 = self.mmc.getImage()
+        else:
+            if self.mmc.getRemainingImageCount() > 0:
                 self.rgb32 = self.mmc.getLastImage()
+            else:
+                print('No frame')
+        if self.rgb32 is not None:
             self.rgb = iptools.rgb32asrgb(self.rgb32)
             self.hist = self.HPlotter.plot(self.rgb)
             self.histogramready.emit()
             self.out = self.CProcessor.process(self.rgb)
             self.newframe.emit()
-        else:
-            print('No frame')
-        delta_time = time.time() - start_time
-        if delta_time != 0:
-            print('FPS: %f') % (1. / (time.time() - start_time))
+            delta_time = time.time() - start_time
+            if delta_time != 0:
+                print('FPS: %f') % (1. / (time.time() - start_time))
 
     @QtCore.Slot()
     def runOnce(self):
