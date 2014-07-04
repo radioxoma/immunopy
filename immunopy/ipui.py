@@ -357,17 +357,16 @@ class VideoProcessor(QtCore.QObject):
         self.workTimer = QtCore.QTimer(parent=self)
         self.workTimer.setInterval(20)
         self.workTimer.timeout.connect(self.process_frame)
+        self.__singleshot = False  # Snap one image flag
 
     @QtCore.Slot()
     def process_frame(self):
-        """Snap picture by chosen manner and process it.
-        
-        workTimer.isSingleShot flag always correspond an image getting method:
-        SingleShot for 'snapImage' and opposite for 'continuous'.
+        """Retrieve frame from buffer and process it.
         """
         start_time = time.time()
-        if self.workTimer.isSingleShot():
+        if self.__singleshot:
             self.rgb32 = self.mmc.getImage()
+            self.__singleshot = False
         else:
             if self.mmc.getRemainingImageCount() > 0:
                 self.rgb32 = self.mmc.getLastImage()
@@ -389,8 +388,8 @@ class VideoProcessor(QtCore.QObject):
         if self.workTimer.isActive():
             raise RuntimeWarning('Timer must be stopped before runOnce()!')
         self.mmc.snapImage()
-        self.workTimer.setSingleShot(True)
-        self.workTimer.start()
+        self.__singleshot = True
+        self.process_frame()
 
     @QtCore.Slot()
     def runContinuous(self):
@@ -399,7 +398,6 @@ class VideoProcessor(QtCore.QObject):
             raise RuntimeWarning('Timer must be stopped before runContinuous()!')
         self.mmc.snapImage()  # Avoid Baumer bug
         self.mmc.startContinuousSequenceAcquisition(1)
-        self.workTimer.setSingleShot(False)
         self.workTimer.start()
 
     @QtCore.Slot()
