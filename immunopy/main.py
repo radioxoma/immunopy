@@ -12,6 +12,7 @@ from PySide import QtCore
 from PySide import QtGui
 import ipui
 import iptools
+import mmanager
 import MMCorePyExperimental as MMCorePy
 
 MM_CONFIGURATION_NAME = "MMConfig_dcam.cfg"
@@ -29,8 +30,12 @@ class MainWindow(QtGui.QMainWindow):
         self.mmc.enableDebugLog(False)
         self.mmc.loadSystemConfiguration(MM_CONFIGURATION_NAME)
         self.mmc.setCircularBufferMemoryFootprint(MM_CIRCULAR_BUFFER)
+        self.MPModel = mmanager.MicromanagerPropertyModel(
+            self.mmc, deviceLabel=self.mmc.getCameraDevice())
+        self.MPBrowser = mmanager.MicromanagerPropertyBrowser(self.MPModel)
+
         self.CMicro = iptools.CalibMicro(DEF_OBJECTIVE)
-        
+
         self.workThread = QtCore.QThread()
         self.VProc = ipui.VideoProcessor(mmcore=self.mmc, parent=self)
         self.VProc.moveToThread(self.workThread)
@@ -75,6 +80,7 @@ class MainWindow(QtGui.QMainWindow):
         menuBar = QtGui.QMenuBar(parent=None)
         self.setMenuBar(menuBar)
         microscopeMenu = menuBar.addMenu('&Microscope')
+        microscopeMenu.addAction(self.MPBrowser.showPropertyBrowserAction)
         viewMenu = menuBar.addMenu('&View')
         viewMenu.addAction(self.dock.toggleViewAction())
         menuBar.addSeparator()  # Motif, CDE likes it.
