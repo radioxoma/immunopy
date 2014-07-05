@@ -63,6 +63,32 @@ class MainWindow(QtGui.QMainWindow):
         self.AControl.peak_dist.valueChanged.connect(self.VProc.setPeakDistance)
         self.AControl.shift_th.valueChanged.connect(self.VProc.setThresholdShift)
 
+        self.createMenus()
+
+    def createMenus(self):
+        """Create parent-less menu (MacOS likes it).
+
+        Microscope("Configure device..."),
+        View ("Ground control", "Statistics"),
+        Help ("About...")
+        """
+        menuBar = QtGui.QMenuBar(parent=None)
+        self.setMenuBar(menuBar)
+        microscopeMenu = menuBar.addMenu('&Microscope')
+        viewMenu = menuBar.addMenu('&View')
+        viewMenu.addAction(self.dock.toggleViewAction())
+        menuBar.addSeparator()  # Motif, CDE likes it.
+        helpMenu = menuBar.addMenu('&Help')
+        helpAction = helpMenu.addAction('&About...', self.showHelp)
+
+    def showHelp(self):
+        desc = """
+        <p>This program perform real time image analysis of IHC-stained assays.</p>
+        <p>Developed by Eugene Dvoretsky, Vitebsk State Medical University, 2014</p>
+        <p><a href="mailto:radioxoma@gmail.com?subject=Immunopy">radioxoma@gmail.com</a></p>
+        """
+        QtGui.QMessageBox.about(self, "About Immunopy", desc)
+
     @QtCore.Slot()
     def updateFrame(self):
         self.GLWiget.setData(self.VProc.out)
