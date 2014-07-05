@@ -157,7 +157,7 @@ class MicroscopeControl(QtGui.QGroupBox):
         
         self.histview = QtGui.QLabel('Histogram')
         self.histview.setAlignment(QtCore.Qt.AlignCenter)
-        self.histview.setMinimumSize(256, 50)
+        self.histview.setFixedSize(256, 100)
         self.in_vbox.addWidget(self.histview)
         
         self.willRunOnce.connect(self.parent.VProc.runOnce)
