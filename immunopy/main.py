@@ -13,11 +13,18 @@ from PySide import QtGui
 import ipui
 import iptools
 import mmanager
-import MMCorePyExperimental as MMCorePy
 
-MM_CONFIGURATION_NAME = "MMConfig_dcam.cfg"
 MM_CIRCULAR_BUFFER = 100
 DEF_OBJECTIVE = '10'
+FAKE_CAMERA = True
+MM_DEBUG = False
+
+if FAKE_CAMERA:
+    import MMCorePyExperimental as MMCorePy
+    MM_CONFIGURATION_NAME = "MMConfig_dcam.cfg"
+else:
+    import MMCorePy
+    MM_CONFIGURATION_NAME = "baumer_generic.cfg"
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -26,8 +33,8 @@ class MainWindow(QtGui.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.mmc = MMCorePy.CMMCore()
-        self.mmc.enableStderrLog(False)
-        self.mmc.enableDebugLog(False)
+        self.mmc.enableStderrLog(MM_DEBUG)
+        self.mmc.enableDebugLog(MM_DEBUG)
         self.mmc.loadSystemConfiguration(MM_CONFIGURATION_NAME)
         self.mmc.setCircularBufferMemoryFootprint(MM_CIRCULAR_BUFFER)
         self.MPModel = mmanager.MicromanagerPropertyModel(
