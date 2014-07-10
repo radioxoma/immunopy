@@ -214,6 +214,8 @@ if __name__ == '__main__':
     # DEVICE = ['Camera', 'OpenCVgrabber', 'OpenCVgrabber']
     # DEVICE = ['Camera', 'BaumerOptronic', 'BaumerOptronic']
     MMC = MMCorePy.CMMCore()
+    MCCallback = MMCorePy.MMEventCallback()
+    MMC.registerCallback(MCCallback)
     MMC.loadDevice(*DEVICE)
     MMC.initializeDevice(DEVICE[0])
     MMC.setCameraDevice(DEVICE[0])
