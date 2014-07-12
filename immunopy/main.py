@@ -10,21 +10,11 @@ Created on 2014-05-25
 import sys
 from PySide import QtCore
 from PySide import QtGui
-import ipui
-import iptools
-import mmanager
 
 MM_CIRCULAR_BUFFER = 100
 DEF_OBJECTIVE = '10'
 FAKE_CAMERA = True
 MM_DEBUG = False
-
-if FAKE_CAMERA:
-    import MMCorePyExperimental as MMCorePy
-    MM_CONFIGURATION_NAME = "MMConfig_dcam.cfg"
-else:
-    import MMCorePy
-    MM_CONFIGURATION_NAME = "baumer_generic.cfg"
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -122,6 +112,23 @@ class MainWindow(QtGui.QMainWindow):
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
+    splash = QtGui.QSplashScreen(QtGui.QPixmap("image/slide.png"),
+        QtCore.Qt.WindowStaysOnTopHint)
+    splash.show()
+    splash.showMessage("Loading tools...", color=QtCore.Qt.gray)
+    app.processEvents()
+    import ipui
+    import iptools
+    splash.showMessage("Loading Micro-manager...", color=QtCore.Qt.gray)
+    app.processEvents()
+    import mmanager
+    if FAKE_CAMERA:
+        import MMCorePyExperimental as MMCorePy
+        MM_CONFIGURATION_NAME = "MMConfig_dcam.cfg"
+    else:
+        import MMCorePy
+        MM_CONFIGURATION_NAME = "baumer_generic.cfg"
     window = MainWindow()
     window.show()
+    splash.finish(window)
     app.exec_()
