@@ -4,7 +4,9 @@
 """
 Created on 2014-05-25
 
-@author: radioxoma
+@author: Eugene Dvoretsky
+
+Immunopy - an IHC image real time analyzer.
 """
 
 import sys
@@ -124,7 +126,7 @@ if __name__ == '__main__':
     import mmanager
     if FAKE_CAMERA:
         import MMCorePyExperimental as MMCorePy
-        MM_CONFIGURATION_NAME = "MMConfig_dcam.cfg"
+        MM_CONFIGURATION_NAME = "demo_camera.cfg"
     else:
         import MMCorePy
         MM_CONFIGURATION_NAME = "baumer_generic.cfg"

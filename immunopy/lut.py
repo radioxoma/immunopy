@@ -4,7 +4,9 @@
 """
 Created on 2014-04-02
 
-@author: radioxoma
+@author: Eugene Dvoretsky
+
+Look Up Table generation and applying.
 """
 
 import numpy as np

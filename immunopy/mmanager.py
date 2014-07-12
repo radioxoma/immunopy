@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Created on 3 Jul. 2014.
+Created on 2014-07-03
+
 @author: Eugene Dvoretsky
 
 Qt-based Micromanager property browser.

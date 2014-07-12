@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 """
-Created on 18 Jan. 2014 г.
+Created on 2014-01-18
 
-@author: radioxoma
+@author: Eugene Dvoretsky
 """
 
 import unittest

@@ -4,7 +4,7 @@
 """
 Created on 2014-02-25
 
-@author: radioxoma
+@author: Eugene Dvoretsky
 """
 
 import numpy as np
@@ -14,7 +14,7 @@ from scipy import ndimage
 class CMMCore(object):
     """Fake Micro-manager RGB32 camera.
     
-    Can return RGB. BGR, BGRA, RGB32.
+    Can return RGB. BGR, BGRA, RGB32. Not depend on micromanager.
     """
     def __init__(self):
         super(CMMCore, self).__init__()

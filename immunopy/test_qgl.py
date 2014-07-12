@@ -4,7 +4,7 @@
 """
 Created on 2014-06-07
 
-@author: radioxoma
+@author: Eugene Dvoretsky
 """
 
 import sys

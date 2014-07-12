@@ -2,17 +2,13 @@
 # -*- coding: utf-8 -*-
 
 """
-Created on 07 Dec. 2013 г.
+Created on 2013-12-07
 
-@author: radioxoma
+@author: Eugene Dvoretsky
 """
 
 import numpy as np
-from scipy import ndimage
 import cv2
-
-# from skimage.exposure import rescale_intensity
-
 import matplotlib.pyplot as plt
 
 
@@ -38,7 +34,8 @@ def show(*segments):
         for nline, line in enumerate(segments, 1):
             for narr, arr in enumerate(line, 1):
                 # plt.subplot(len(segments), len(line), narr+nline)
-                plt.subplot(len(segments), len(line), (nline-1) * len(line)+narr)
+                plt.subplot(
+                    len(segments), len(line), (nline - 1) * len(line) + narr)
                 plt.axis('off')
                 plt.imshow(arr, interpolation='None')
         plt.show()
@@ -51,7 +48,3 @@ def cvshow(img):
     cv2.imshow('cvshow', img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-
-
-if __name__ == '__main__':
-    pass

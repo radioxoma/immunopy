@@ -4,7 +4,7 @@
 """
 Created on 2014-05-28
 
-@author: radioxoma
+@author: Eugene Dvoretsky
 """
 
 import numpy as np
@@ -13,7 +13,7 @@ import MMCorePy
 
 
 class CMMCore(MMCorePy.CMMCore):
-    """Fake Micro-manager RGB32 camera.
+    """Fake Micro-manager RGB32 camera, returns specified image.
     """
     def __init__(self):
         super(CMMCore, self).__init__()
@@ -30,6 +30,8 @@ class CMMCore(MMCorePy.CMMCore):
             raise ValueError(
                 "ROI %d, %d, %dx%d is bigger than image" % (x, y, w, h))
         self.frame = self.RGB32[y:y+h, x:x+w].copy()
+    def clearROI(self):
+        self.frame = self.RGB32.copy()
     def getLastImage(self):
         return self.frame
     def getImage(self):

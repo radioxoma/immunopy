@@ -2,16 +2,16 @@
 # -*- coding: utf-8 -*-
 
 """
-Created on 18 Jan. 2014 г.
+Created on 2014-01-18
 
-@author: radioxoma
+@author: Eugene Dvoretsky
+
+Cell segmentation algorithm demo with simple opencv-based GUI.
 """
 
 import time
-from multiprocessing import Pool
 import cv2
 import MMCorePyFake as MMCorePy
-
 import iptools
 import lut
 
@@ -47,8 +47,7 @@ def set_vtype(value):
 if __name__ == '__main__':
     CMicro = iptools.CalibMicro(MAGNIFICATION)
     SCALE = CMicro.scale
-    POOL = Pool(processes=2)
-    CProcessor = iptools.CellProcessor(scale=SCALE, colormap=lut.random_jet(), pool=POOL)
+    CProcessor = iptools.CellProcessor(scale=SCALE, colormap=lut.random_jet(), mp=True)
     print('curscale %f') % CMicro.scale
     print('um2px %f') % SCALE
 
@@ -65,7 +64,6 @@ if __name__ == '__main__':
     mmc.setProperty(DEVICE[0], 'PixelType', '32bitRGB')
     iptools.set_mmc_resolution(mmc, 512, 512)
     mmc.snapImage()  # Baumer bug workaround
-    # mmc.initializeCircularBuffer()
     cv2.namedWindow('Overlay')
     cv2.namedWindow('Controls', flags=cv2.WINDOW_NORMAL | cv2.WINDOW_AUTOSIZE)
     if mmc.hasProperty(DEVICE[0], 'Gain'):

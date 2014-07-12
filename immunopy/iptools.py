@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
-Created on 16 Jan. 2014 г.
+Created on 2014-01-16
 
-@author: radioxoma
+@author: Eugene Dvoretsky
+
+Immunopy image processing core.
 """
 
 from multiprocessing import Pool
@@ -220,16 +222,16 @@ class CellProcessor(object):
         hem = hdx[:,:,0]
         dab = hdx[:,:,1]
 
-        # MULTICORE -------------------------------------------------------------
+        # MULTICORE -----------------------------------------------------------
         if self.pool:
-            hemfiltered, hemfnum = worker(hem, self.threshold_shift, self.peak_distance, self.min_size, self.max_size)
-            dabfiltered, dabfnum = worker(dab, self.threshold_shift + 10, self.peak_distance, self.min_size, self.max_size)
-        else:
             hproc = self.pool.apply_async(worker, (hem, self.threshold_shift, self.peak_distance, self.min_size, self.max_size))
             dproc = self.pool.apply_async(worker, (dab, self.threshold_shift + 10, self.peak_distance, self.min_size, self.max_size))
             hemfiltered, hemfnum = hproc.get(timeout=5)
             dabfiltered, dabfnum = dproc.get(timeout=5)
-        # MULTICORE END ---------------------------------------------------------
+        else:
+            hemfiltered, hemfnum = worker(hem, self.threshold_shift, self.peak_distance, self.min_size, self.max_size)
+            dabfiltered, dabfnum = worker(dab, self.threshold_shift + 10, self.peak_distance, self.min_size, self.max_size)
+        # MULTICORE END -------------------------------------------------------
 
         # Stats
         stats =  float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100

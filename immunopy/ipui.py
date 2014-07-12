@@ -4,12 +4,9 @@
 """
 Created on 2014-05-16
 
-@author: radioxoma
+@author: Eugene Dvoretsky
 
-TODO:
-* Pixel buffer
-* Correct image rotation
-* Correct GL
+Immunopy GUI primitives.
 """
 
 import sys

@@ -4,10 +4,12 @@
 """
 Created on 2014-03-28
 
-@author: radioxoma
+@author: Eugene Dvoretsky
+
+Analyze input video and render distinguished colored cells with statistic
+to another one.
 """
 
-from multiprocessing import Pool
 import cv2
 import iptools
 import lut
@@ -26,8 +28,8 @@ def CV_FOURCC(c1, c2, c3, c4):
 
 if __name__ == '__main__':
     CMicro = iptools.CalibMicro(MAGNIFICATION)
-    POOL = Pool(processes=2)
-    CProcessor = iptools.CellProcessor(scale=CMicro.scale, colormap=lut.random_jet(), pool=POOL)
+    CProcessor = iptools.CellProcessor(
+        scale=CMicro.scale, colormap=lut.random_jet(), mp=True)
     CProcessor.vtype = 4
 
     cv2.namedWindow('Video')
