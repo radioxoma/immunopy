@@ -348,7 +348,7 @@ class VideoProcessor(QtCore.QObject):
         self.parent = parent
         self.mmc = mmcore
         self.CProcessor = iptools.CellProcessor(
-            scale=parent.CMicro.scale, colormap=lut.random_jet())
+            scale=parent.CMicro.scale, colormap=lut.random_jet(), mp=True)
         self.HPlotter = iptools.HistogramPlotter(gradient=True)
         self.rgb32 = None
         self.rgb = None

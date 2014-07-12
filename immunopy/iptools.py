@@ -7,7 +7,7 @@ Created on 16 Jan. 2014 г.
 @author: radioxoma
 """
 
-import operator
+from multiprocessing import Pool
 import numpy as np
 from scipy import ndimage
 from skimage.exposure import histogram
@@ -16,7 +16,6 @@ from skimage.color import separate_stains, hdx_from_rgb
 from skimage.feature import peak_local_max
 import cv2
 from PySide import QtCore
-
 import lut
 
 
@@ -132,10 +131,14 @@ class HistogramPlotter(object):
 
 class CellProcessor(object):
     """Segment and visualize cell image.
-    
+
     Accept RGB image, return statistics and visualization.
+
+    scale: init scale
+    colormap: an numpy array colormap (Look Up Table)
+    mp: bool, use multiprocessing
     """
-    def __init__(self, scale, colormap, pool=None):
+    def __init__(self, scale, colormap, mp=False):
         super(CellProcessor, self).__init__()
         self.threshold_shift = 20
         self.min_size = 10
@@ -146,7 +149,10 @@ class CellProcessor(object):
         self.scale = scale
         self.blur = 2
         self.colormap = colormap
-        self.pool = pool
+        if mp:
+            self.pool = Pool(processes=2)
+        else:
+            self.pool = None
 
     @property
     def scale(self):
@@ -215,7 +221,7 @@ class CellProcessor(object):
         dab = hdx[:,:,1]
 
         # MULTICORE -------------------------------------------------------------
-        if self.pool is None:
+        if self.pool:
             hemfiltered, hemfnum = worker(hem, self.threshold_shift, self.peak_distance, self.min_size, self.max_size)
             dabfiltered, dabfnum = worker(dab, self.threshold_shift + 10, self.peak_distance, self.min_size, self.max_size)
         else:
@@ -344,7 +350,7 @@ def normalize(img):
 
 
 def rescale(source, scale):
-    """Если scale > 2 um/px, то изображение будет уменьшаться.
+    """If scale > 2 um/px, image size would be redused.
     """
     if scale == 2.0:  # pixels per um
         return source
@@ -552,12 +558,6 @@ def montage(tl, tr, bl, br):
 #         super(AnalyticsTools, self).__init__()
 
 
-def draw_histogram():
-    """RGB, Log.
-    Думаю стоит рисовать ее как в Leica - тонкими линиями по каналам."""
-    pass
-
-
 def calc_stats(hemlabels, dablabels):
     """Return area fraction.
 
@@ -608,14 +608,6 @@ def get_prop_dtype(mmcore, devlabel, prop):
     
     Not implemented in MMCorePy.
     """
-    t = mmcore.getPropertyType(devlabel, prop)
-    if t == 0:  # Undef probably
-        return None
-    elif t == 1:  # String
-        return str
-    elif t == 2:  # Float
-        return float
-    elif t == 3:  # Integer
-        return int
-    else:
-        raise ValueError("Unexpected property type '%s'" % t)
+    proptype = mmcore.getPropertyType(devlabel, prop)
+    types = (None, str, float, int)
+    return types[proptype]
