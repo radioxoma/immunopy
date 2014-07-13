@@ -17,6 +17,7 @@ class MicromanagerPropertyModel(QtCore.QAbstractTableModel):
     """Micromanager property model.
 
     May be should use callback if CMMCore property has accidentally changes?
+    Can't use CMMCore callbacks cause Micromanager insufficient implementation.
     """
     def __init__(self, mmcore, deviceLabel):
         super(MicromanagerPropertyModel, self).__init__()
@@ -24,7 +25,7 @@ class MicromanagerPropertyModel(QtCore.QAbstractTableModel):
         self.dlabel = deviceLabel
         self.pnames = list(self.mmc.getDevicePropertyNames(self.dlabel))
 
-    def rowCount(self, index, parent='QModelIndex'):
+    def rowCount(self, index, parent=QtCore.QModelIndex()):
         """Returns the number of rows under the given parent.
 
         When the parent is valid it means that rowCount is returning
@@ -32,7 +33,7 @@ class MicromanagerPropertyModel(QtCore.QAbstractTableModel):
         """
         return len(self.pnames)
 
-    def columnCount(self, index, parent='QModelIndex'):
+    def columnCount(self, index, parent=QtCore.QModelIndex()):
         return 3
 
     def data(self, index, role=QtCore.Qt.DisplayRole):
@@ -61,7 +62,8 @@ class MicromanagerPropertyModel(QtCore.QAbstractTableModel):
             print(value, type(value))
             self.mmc.setProperty(
                 self.dlabel, self.pnames[index.row()], str(value))
-            print('getProp', self.mmc.getProperty(self.dlabel, self.pnames[index.row()]))
+            print('getProp', self.mmc.getProperty(
+                self.dlabel, self.pnames[index.row()]))
             self.dataChanged.emit(index, index)
             return True  # If core accept data
         else:
@@ -148,13 +150,14 @@ class MicromanagerPropertyDelegate(QtGui.QStyledItemDelegate):
                 editor = QtGui.QSpinBox(parent=parent)
             elif isinstance(value, float):
                 editor = QtGui.QDoubleSpinBox(parent=parent)
-            editor.setMaximum(
-                proptype(self.mmc.getPropertyUpperLimit(self.dlabel, propname)))
-            editor.setMinimum(
-                proptype(self.mmc.getPropertyLowerLimit(self.dlabel, propname)))
+            editor.setMaximum(proptype(
+                self.mmc.getPropertyUpperLimit(self.dlabel, propname)))
+            editor.setMinimum(proptype(
+                self.mmc.getPropertyLowerLimit(self.dlabel, propname)))
         else:
             editor = QtGui.QComboBox(parent=parent)
-            editor.addItems(self.mmc.getAllowedPropertyValues(self.dlabel, propname))
+            editor.addItems(
+                self.mmc.getAllowedPropertyValues(self.dlabel, propname))
         editor.setFrame(False)
         return editor
 
@@ -202,7 +205,6 @@ class MicromanagerPropertyBrowser(QtGui.QDialog):
             deviceLabel=self.model.dlabel)
         self.view.setItemDelegate(self.delegate)
         self.vbox.addWidget(self.view)
-        
         self.showPropertyBrowserAction = QtGui.QAction(self)
         self.showPropertyBrowserAction.setText("&Configure device...")
         self.showPropertyBrowserAction.triggered.connect(self.show)
