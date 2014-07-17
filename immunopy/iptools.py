@@ -234,31 +234,31 @@ class CellProcessor(object):
         # MULTICORE END -------------------------------------------------------
 
         # Stats
-        stats =  float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100
-        stats2 = calc_stats(hemfiltered, dabfiltered) * 100
-        stats3 = calc_stats_binary(hemfiltered, dabfiltered) * 100
+        cellfraction =  float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100
+        dab_hemfraction = areaFraction(hemfiltered, dabfiltered) * 100
+        dab_dabhemfraction = areaDisjFraction(hemfiltered, dabfiltered) * 100
 
         # Visualization
         if self.vtype == 1:
-            overlay = draw_overlay(scaled, dabfiltered, hemfiltered)
+            overlay = drawOverlay(scaled, dabfiltered, hemfiltered)
         elif self.vtype == 2:
             overlay = lut.apply_lut(dabfiltered, self.colormap)
         elif self.vtype == 3:
             overlay = lut.apply_lut(hemfiltered, self.colormap)
         else:
-            overlay = draw_overlay(scaled, dabfiltered, hemfiltered)
+            overlay = drawOverlay(scaled, dabfiltered, hemfiltered)
             dabcolored = lut.apply_lut(dabfiltered, self.colormap)
             hemcolored = lut.apply_lut(hemfiltered, self.colormap)
-            cv2.putText(scaled, 'Cell fraction %.1f %%' % stats, (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
-            cv2.putText(scaled, 'Area fr. %.1f, disj %.1f' % (stats2, stats3), (12,120), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
+            cv2.putText(scaled, 'Cell fraction %.1f %%' % cellfraction, (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
+            cv2.putText(scaled, 'Area fr. %.1f, disj %.1f' % (dab_hemfraction, dab_dabhemfraction), (12,120), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
             cv2.putText(overlay, 'Colocalization', (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
             cv2.putText(dabcolored, 'DAB %3.d objects' % dabfnum, (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
             cv2.putText(hemcolored, 'HEM %3.d objects' % hemfnum, (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
             return montage(scaled, hemcolored, overlay, dabcolored)
 
-        cv2.putText(overlay, 'Num D%3.d/H%3.d, %.2f %%' % (dabfnum, hemfnum, stats), (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
-        cv2.putText(overlay, 'Area fract %.2f' % stats2, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
-        cv2.putText(overlay, 'Ar disj %.2f' % stats3, (2,85), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+        cv2.putText(overlay, 'Num D%3.d/H%3.d, %.2f %%' % (dabfnum, hemfnum, cellfraction), (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+        cv2.putText(overlay, 'DAB/HEM %.2f' % dab_hemfraction, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+        cv2.putText(overlay, 'DAB/DAB||HEM %.2f' % dab_dabhemfraction, (2,85), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
         return overlay
 
 
@@ -275,8 +275,8 @@ def worker(stain, threshold_shift, peak_distance, min_size, max_size):
         stmed.view(np.uint8), distanceType=cv2.cv.CV_DIST_L2, maskSize=3)
     st_max = peak_local_max(
         stedt, min_distance=peak_distance, exclude_border=False, indices=False)
-    stlabels, stlnum = watershed_segmentation(stmed, stedt, st_max)
-    stfiltered, stfnum = filter_objects(
+    stlabels, stlnum = watershedSegmentation(stmed, stedt, st_max)
+    stfiltered, stfnum = filterObjects(
         stlabels, stlnum, min_size, max_size)
     return stfiltered, stfnum
 
@@ -294,7 +294,7 @@ def rgb32asrgb(rgb32):
         rgb32.shape[0], rgb32.shape[1], 4)[...,2::-1]
 
 
-def get_central_rect(width, height, divisor=1):
+def getCentralRect(width, height, divisor=1):
     """Select central rectangle with reduced size.
 
     MMstudio-like.
@@ -327,7 +327,7 @@ def get_central_rect(width, height, divisor=1):
     return roi
 
 
-def set_mmc_resolution(mmc, width, height):
+def setMmcResolution(mmc, width, height):
     """Select rectangular ROI in center of the frame.
     """
     x = (mmc.getImageWidth() - width) / 2
@@ -436,7 +436,7 @@ def threshold_isodata(image, nbins=256, shift=None):
     return threshold
 
 
-def watershed_segmentation(mask, edt, local_maxi):
+def watershedSegmentation(mask, edt, local_maxi):
     """Segment clumped nuclei.
 
     Something like Malpica N, de Solorzano CO, Vaquero JJ, Santos et all
@@ -448,7 +448,7 @@ def watershed_segmentation(mask, edt, local_maxi):
     return labels, num_markers
 
 
-def filter_objects(labels, num=None, min_size=150, max_size=2000, in_place=False):
+def filterObjects(labels, num=None, min_size=150, max_size=2000, in_place=False):
     """Remove too small or too big objects from array.
 
     labels: array labels given by ndimage.label function.
@@ -500,7 +500,7 @@ def circularity(arr):
     return arr.sum() / S
 
 
-def draw_overlay(srcrgb, red, blue):
+def drawOverlay(srcrgb, red, blue):
     """Draw objects in single channel. Alpha-like.
     """
     rgb = srcrgb.copy()
@@ -513,7 +513,7 @@ def draw_overlay(srcrgb, red, blue):
     return rgb
 
 
-def draw_masks(srcrgb, red, blue):
+def drawMasks(srcrgb, red, blue):
     """Draw objects on image"""
     """
     Draws on source image with different colors under stains masks.
@@ -560,8 +560,8 @@ def montage(tl, tr, bl, br):
 #         super(AnalyticsTools, self).__init__()
 
 
-def calc_stats(hemlabels, dablabels):
-    """Return area fraction.
+def areaFraction(hemlabels, dablabels):
+    """Return simple area fraction.
 
     TODO:
         * выдавать статистику по labels (хотя бы размеры)
@@ -571,24 +571,24 @@ def calc_stats(hemlabels, dablabels):
     dabarea = np.count_nonzero(dablabels)
     dabhem = dabarea + hemarea
     if dabhem == 0:
-        return 0
+        return 0.
     else:
         return float(dabarea) / dabhem
 
 
-def calc_stats_binary(hemlabels, dablabels):
-    """DAB / (All area covered with DAB or HEM)
+def areaDisjFraction(hemlabels, dablabels):
+    """DAB / (All area covered with DAB or HEM i.e. disjunction).
 
     Sometimes DAB and HEM areas intersects.
     """
     botharea = np.count_nonzero(np.logical_or(hemlabels, dablabels))
     if botharea == 0:
-        return 0
+        return 0.
     else:
         return float(np.count_nonzero(dablabels)) / botharea
 
 
-def fit_polynominal(percent):
+def fitPolynominal(percent):
     """Correct result basing on Immunoratio polynominal.
     """
     a = 0.00006442
@@ -603,13 +603,3 @@ def autofocus():
     В оригинале статьи про watershed была функция для проверки фокусировки.
     """
     pass
-
-
-def get_prop_dtype(mmcore, devlabel, prop):
-    """Get allowed property datatype.
-    
-    Not implemented in MMCorePy.
-    """
-    proptype = mmcore.getPropertyType(devlabel, prop)
-    types = (None, str, float, int)
-    return types[proptype]

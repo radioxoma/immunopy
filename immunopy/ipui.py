@@ -44,7 +44,7 @@ class AdjustBar(QtGui.QWidget):
         self.form = QtGui.QFormLayout()
         # self.hbox.setAlignment(QtCore.Qt.AlignTop)
         self.slid = QtGui.QSlider(QtCore.Qt.Horizontal)
-        if iptools.get_prop_dtype(self.mmc, self.camname, prop) is int:
+        if self.mmc.getPropertyType(self.camname, prop) == 3:  # 3 is int
             self.spin = QtGui.QSpinBox()
             self.slid.setRange(int(self.minlim), int(self.maxlim))
             self.spin.setRange(int(self.minlim), int(self.maxlim))
