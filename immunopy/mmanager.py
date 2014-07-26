@@ -24,6 +24,7 @@ class MicromanagerPropertyModel(QtCore.QAbstractTableModel):
         self.mmc = mmcore
         self.dlabel = deviceLabel
         self.pnames = list(self.mmc.getDevicePropertyNames(self.dlabel))
+        self.__header = ('Property', 'Value', 'Type')
 
     def rowCount(self, index, parent=QtCore.QModelIndex()):
         """Returns the number of rows under the given parent.
@@ -87,9 +88,9 @@ class MicromanagerPropertyModel(QtCore.QAbstractTableModel):
         the specified orientation.
         """
         if role == QtCore.Qt.DisplayRole:
-            header = ('Property', 'Value', 'Type')
+            self.__header
             if orientation == QtCore.Qt.Horizontal:
-                return header[section]
+                return self.__header[section]
             else:
                 return '%.2d' % (section + 1)
         else:
@@ -200,6 +201,7 @@ class MicromanagerPropertyBrowser(QtGui.QDialog):
         self.view = QtGui.QTableView()
         self.view.setSortingEnabled(True)
         self.view.setWordWrap(False)
+        self.view.horizontalHeader().setResizeMode(QtGui.QHeaderView.Stretch)
         self.view.setModel(self.model)
         self.delegate = MicromanagerPropertyDelegate(
             deviceLabel=self.model.dlabel)
