@@ -57,6 +57,7 @@ class StatDataModel(QtCore.QAbstractTableModel):
         self.__assays = list()
         self.__header = (
             'Timestamp', 'Cell fraction', 'DAB/HEM', 'DAB / DAB|HEM', 'Photo')
+        self.isSaveImage = False
 
     def rowCount(self, index=QtCore.QModelIndex(), parent=QtCore.QModelIndex()):
         return len(self.__assays)
@@ -274,8 +275,13 @@ class StatisticsBrowser(QtGui.QWidget):
         """Force set model data directory if not specified yet and user wants
         to save statdata.
         """
-        if state == QtCore.Qt.Checked and self.model.isDataDir() is False:
+        if self.model.isDataDir() is False:
             self.setModelDataDir()
+        if self.model.isDataDir() and state == QtCore.Qt.Checked:
+            self.model.isSaveImage = True
+        else:
+            self.model.isSaveImage = False
+        print(self.model.isSaveImage)
 
     @QtCore.Slot()
     def askAssay(self):
@@ -289,6 +295,7 @@ class StatisticsBrowser(QtGui.QWidget):
         """Can ask for new assays.
         """
         self.btnAdd.setEnabled(True)
+
 
 if __name__ == '__main__':
     import sys

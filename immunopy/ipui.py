@@ -19,6 +19,7 @@ from OpenGL.GL import *
 from OpenGL import ERROR_ON_COPY
 import iptools
 import lut
+import statdata
 
 ERROR_ON_COPY = True  # Raise exception on array copy or casting
 # http://pyopengl.sourceforge.net/documentation/opengl_diffs.html
@@ -339,6 +340,7 @@ class VideoProcessor(QtCore.QObject):
     """Get frames and process it. Should live in separate thread."""
     newframe = QtCore.Signal()
     histogramready = QtCore.Signal()
+    modelGotAssay = QtCore.Signal()
     
     def __init__(self, mmcore, parent=None):
         super(VideoProcessor, self).__init__()
@@ -347,6 +349,7 @@ class VideoProcessor(QtCore.QObject):
         self.CProcessor = iptools.CellProcessor(
             scale=parent.CMicro.scale, colormap=lut.random_jet(), mp=True)
         self.HPlotter = iptools.HistogramPlotter(gradient=True)
+        self.__model = statdata.StatDataModel()
         self.rgb32 = None
         self.rgb = None
         self.out = None
@@ -355,29 +358,31 @@ class VideoProcessor(QtCore.QObject):
         self.workTimer.setInterval(20)
         self.workTimer.timeout.connect(self.process_frame)
         self.__singleshot = False  # Snap one image flag
+        self.__lock = QtCore.QMutex()
 
     @QtCore.Slot()
     def process_frame(self):
         """Retrieve frame from buffer and process it.
         """
         start_time = time.time()
-        if self.__singleshot:
-            self.rgb32 = self.mmc.getImage()
-            self.__singleshot = False
-        else:
-            if self.mmc.getRemainingImageCount() > 0:
-                self.rgb32 = self.mmc.getLastImage()
+        with QtCore.QMutexLocker(self.__lock):
+            if self.__singleshot:
+                self.rgb32 = self.mmc.getImage()
+                self.__singleshot = False
             else:
-                print('No frame')
-        if self.rgb32 is not None:
-            self.rgb = iptools.rgb32asrgb(self.rgb32)
-            self.hist = self.HPlotter.plot(self.rgb)
-            self.histogramready.emit()
-            self.out = self.CProcessor.process(self.rgb)
-            self.newframe.emit()
-            delta_time = time.time() - start_time
-            if delta_time != 0:
-                print('FPS: %f') % (1. / (time.time() - start_time))
+                if self.mmc.getRemainingImageCount() > 0:
+                    self.rgb32 = self.mmc.getLastImage()
+                else:
+                    print('No frame')
+            if self.rgb32 is not None:
+                self.rgb = iptools.rgb32asrgb(self.rgb32)
+                self.hist = self.HPlotter.plot(self.rgb)
+                self.histogramready.emit()
+                self.out = self.CProcessor.process(self.rgb)
+                self.newframe.emit()
+                delta_time = time.time() - start_time
+                if delta_time != 0:
+                    print('FPS: %f') % (1. / (time.time() - start_time))
 
     @QtCore.Slot()
     def runOnce(self):
@@ -396,6 +401,28 @@ class VideoProcessor(QtCore.QObject):
         self.mmc.snapImage()  # Avoid Baumer bug
         self.mmc.startContinuousSequenceAcquisition(1)
         self.workTimer.start()
+
+    @QtCore.Slot()
+    def pushAssay(self):
+        """Safely save statistics and image to StatModel.
+        """
+        with QtCore.QMutexLocker(self.__lock):
+            if self.__model.isSaveImage:
+                a = statdata.Assay(
+                    cellfraction=self.CProcessor.stCellFraction,
+                    dab_hemfraction=self.CProcessor.stDabHemFraction,
+                    dab_dabhemfraction=self.CProcessor.stDabDabHemFraction,
+                    photo=self.rgb)
+            else:
+                a = statdata.Assay(
+                    cellfraction=self.CProcessor.stCellFraction,
+                    dab_hemfraction=self.CProcessor.stDabHemFraction,
+                    dab_dabhemfraction=self.CProcessor.stDabDabHemFraction)
+            self.__model.appendAssay(a)
+            self.modelGotAssay.emit()
+    
+    def getModel(self):
+        return self.__model
 
     @QtCore.Slot()
     def stop(self):

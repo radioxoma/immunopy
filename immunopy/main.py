@@ -57,9 +57,7 @@ class MainWindow(QtGui.QMainWindow):
         self.addDockWidget(
             QtCore.Qt.DockWidgetArea(QtCore.Qt.LeftDockWidgetArea), self.dock)
         
-        self.statModel = statdata.StatDataModel()
-        self.statBrowser = statdata.StatisticsBrowser(self.statModel)
-        self.statModel.appendAssay(statdata.Assay(cellfraction=3.9, dab_hemfraction=4.9, dab_dabhemfraction=0.9, photo=None))
+        self.statBrowser = statdata.StatisticsBrowser(self.VProc.getModel())
         self.dockStat = QtGui.QDockWidget('Statistics', parent=self)
         self.dockStat.setWidget(self.statBrowser)
         self.addDockWidget(
@@ -74,6 +72,9 @@ class MainWindow(QtGui.QMainWindow):
         self.AControl.sizemin.valueChanged.connect(self.VProc.setMinSize)
         self.AControl.peak_dist.valueChanged.connect(self.VProc.setPeakDistance)
         self.AControl.shift_th.valueChanged.connect(self.VProc.setThresholdShift)
+        
+        self.statBrowser.wantAssay.connect(self.VProc.pushAssay)
+        self.VProc.modelGotAssay.connect(self.statBrowser.ready)
 
         self.createMenus()
 
