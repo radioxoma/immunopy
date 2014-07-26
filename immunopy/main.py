@@ -57,6 +57,14 @@ class MainWindow(QtGui.QMainWindow):
         self.addDockWidget(
             QtCore.Qt.DockWidgetArea(QtCore.Qt.LeftDockWidgetArea), self.dock)
         
+        self.statModel = statdata.StatDataModel()
+        self.statBrowser = statdata.StatisticsBrowser(self.statModel)
+        self.statModel.appendAssay(statdata.Assay(cellfraction=3.9, dab_hemfraction=4.9, dab_dabhemfraction=0.9, photo=None))
+        self.dockStat = QtGui.QDockWidget('Statistics', parent=self)
+        self.dockStat.setWidget(self.statBrowser)
+        self.addDockWidget(
+            QtCore.Qt.DockWidgetArea(QtCore.Qt.BottomDockWidgetArea), self.dockStat)
+        
         self.VProc.newframe.connect(self.updateFrame)
         self.VProc.histogramready.connect(self.MControl.setHistogram)
         self.CMicro.scale_changed.connect(self.VProc.setScale)
@@ -82,6 +90,7 @@ class MainWindow(QtGui.QMainWindow):
         microscopeMenu.addAction(self.MPBrowser.showPropertyBrowserAction)
         viewMenu = menuBar.addMenu('&View')
         viewMenu.addAction(self.dock.toggleViewAction())
+        viewMenu.addAction(self.dockStat.toggleViewAction())
         menuBar.addSeparator()  # Motif, CDE likes it.
         helpMenu = menuBar.addMenu('&Help')
         helpAction = helpMenu.addAction('&About...', self.showHelp)
@@ -121,6 +130,7 @@ if __name__ == '__main__':
     app.processEvents()
     import ipui
     import iptools
+    import statdata
     splash.showMessage("Loading Micro-manager...", color=QtCore.Qt.gray)
     app.processEvents()
     import mmanager
