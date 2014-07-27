@@ -11,6 +11,7 @@ Operates with image and statistics data on filesystem.
 
 import os
 import datetime
+import csv
 from PySide import QtCore
 from PySide import QtGui
 from scipy import misc
@@ -167,7 +168,10 @@ class StatDataModel(QtCore.QAbstractTableModel):
             print("Datadir setted to '%s'" % directory)
         else:
             raise ValueError("Incorrect file path %s" % directory)
-        
+    
+    def getDataDir(self):
+        return self.__datadir
+    
     def isDataDir(self):
         """Is data directory specified and exist?
         """
@@ -175,7 +179,27 @@ class StatDataModel(QtCore.QAbstractTableModel):
             return os.path.exists(self.__datadir)
         else:
             return False
-
+    
+    def exportToCsv(self, filepath):
+        """Ask for filename and write
+        """
+        table = list()
+        table.append(list(self.__header))
+        for a in self.__assays:
+            if a.photo is None:
+                a.photo = str()
+            else:
+                a.photo = a.photo.encode("utf-8")
+            table.append(
+                [a.timestamp.isoformat(),
+                 a.cellfraction,
+                 a.dab_hemfraction,
+                 a.dab_dabhemfraction,
+                 a.photo])
+        with open(filepath, mode='w') as f:
+            writer = csv.writer(f)
+            writer.writerows(table)
+                
     def scanForAssays(self):
         """Scan filesystem directory for images and it's metadata.
          
@@ -235,6 +259,8 @@ class StatisticsBrowser(QtGui.QWidget):
         self.hButtonLayout.addWidget(self.cbxSaveImage)
         self.btnSetDir = QtGui.QPushButton('Set path')
         self.hButtonLayout.addWidget(self.btnSetDir)
+        self.btnExportCsv = QtGui.QPushButton('Export')
+        self.hButtonLayout.addWidget(self.btnExportCsv)
         
         self.view = QtGui.QTableView()
         self.view.horizontalHeader().setResizeMode(QtGui.QHeaderView.Stretch)
@@ -250,6 +276,7 @@ class StatisticsBrowser(QtGui.QWidget):
         self.btnDel.clicked.connect(self.deleteSelectedRows)
         self.btnSetDir.clicked.connect(self.setModelDataDir)
         self.cbxSaveImage.stateChanged.connect(self.toggleModelDataDir)
+        self.btnExportCsv.clicked.connect(self.export)
 
     @QtCore.Slot()
     def deleteSelectedRows(self):
@@ -268,7 +295,8 @@ class StatisticsBrowser(QtGui.QWidget):
         """Set model data directory through GUI.
         """
         datadir = QtGui.QFileDialog.getExistingDirectory(parent=self,
-             caption="Where to save image data and statistics?")
+             caption="Where to save image data and statistics?",
+             dir=self.model.getDataDir())
         if len(datadir) > 0:
             self.model.setDataDir(datadir)
         else:
@@ -285,7 +313,6 @@ class StatisticsBrowser(QtGui.QWidget):
             self.model.isSaveImage = True
         else:
             self.model.isSaveImage = False
-        print(self.model.isSaveImage)
 
     @QtCore.Slot()
     def askAssay(self):
@@ -299,14 +326,26 @@ class StatisticsBrowser(QtGui.QWidget):
         """Can ask for new assays.
         """
         self.btnAdd.setEnabled(True)
+    
+    @QtCore.Slot()
+    def export(self):
+        fdialog = QtGui.QFileDialog()
+        fdialog.setDefaultSuffix("csv")
+        filepath = fdialog.getSaveFileName(
+            caption="Where to save *.csv file?",
+            dir=self.model.getDataDir(),
+            filter="CSV files (*.csv);; Any files (*)")[0]
+        # Need testing under Windows
+        # if not filepath.endswith(".csv"):
+        #     filepath += ".csv"
+        print(filepath)
+        self.model.exportToCsv(filepath)
 
 
 if __name__ == '__main__':
     import sys
     app = QtGui.QApplication(sys.argv)
     model = StatDataModel()
-    model.appendAssay(Assay(cellfraction=0.7, dab_hemfraction=1.3, dab_dabhemfraction=0.9, photo='Maybe'))
-    model.appendAssay(Assay(cellfraction=1.3, dab_hemfraction=2.9, dab_dabhemfraction=0.9, photo=None))
     model.appendAssay(Assay(cellfraction=2.2, dab_hemfraction=3.5, dab_dabhemfraction=0.1, photo=None))
     window = StatisticsBrowser(model)
     model.appendAssay(Assay(cellfraction=3.9, dab_hemfraction=4.9, dab_dabhemfraction=0.9, photo=None))
