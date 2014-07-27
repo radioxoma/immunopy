@@ -13,7 +13,8 @@ import os
 import datetime
 from PySide import QtCore
 from PySide import QtGui
-from PIL import Image, TiffImagePlugin
+from scipy import misc
+from PIL import TiffImagePlugin
 TiffImagePlugin.WRITE_LIBTIFF = True
 
 
@@ -104,19 +105,6 @@ class StatDataModel(QtCore.QAbstractTableModel):
         else:
             return None
 
-#     def setData(self, index, value, role=QtCore.Qt.EditRole):
-#         """Sets the role data for the item at index to value.
-#         """
-#         if index.isValid() and role == QtCore.Qt.EditRole:
-#             print(value, type(value))
-#             self.dataChanged.emit(index, index)
-            # self.dataChanged.emit(
-            #     self.createIndex(total_rows, 0),
-            #     self.createIndex(total_rows, self.columnCount()))
-#             return True  # If core accept data
-#         else:
-#             return False
-
     def insertRows(self, row, count, parent=QtCore.QModelIndex()):
         """Opposed to setData.
         """
@@ -129,14 +117,32 @@ class StatDataModel(QtCore.QAbstractTableModel):
         """Add statistics and image (and save it on disk) to end of the table.
         
         Replaces both insertRow and setData.
+        
+        There is issue with metadata handling and image compression.
+        * TIFF format leaks for standardized rich metadata container.
+          Although OMERO project afford necessary capabilities with OME-TIFF,
+          it's too much overhead to implement it by myself.
+        * Pillow can't compress TIFF and save it with tags without libtiff.
+          May be in future we switch to Bioformats or pylibtiff to overreach
+          this disadvantages.
         """
         total_rows = self.rowCount()
         self.beginInsertRows(QtCore.QModelIndex(), total_rows, total_rows)
+        if assay.photo is not None:
+            img = misc.toimage(assay.photo)
+            imgpath = os.path.join(
+                self.__datadir, assay.timestamp.strftime("%Y%m%d-%H%M%S.tif"))
+            tiffinfo = {
+                270: str(assay),  # ImageDescription
+                305: "Immunopy",  # Software
+                306: assay.timestamp.strftime("%Y:%m:%d %H:%M:%S")}  # DateTime
+            img.save(
+                imgpath.encode("utf-8"),
+                format='TIFF',
+                compression="tiff_deflate",
+                tiffinfo=tiffinfo)
+            assay.photo = imgpath  # May be bad practice
         self.__assays.append(assay)
-#         self.__assays.append(Assay(cellfraction=0.7, dab_hemfraction=1.3, dab_dabhemfraction=0.9, photo='Maybe'))
-        # im = misc.toimage(arr)
-        # os.path.join()
-        # im.save(filename, compression = "tiff_lzw")
         print("Appending assay %s" % assay)
         self.endInsertRows()
         return True
@@ -145,15 +151,13 @@ class StatDataModel(QtCore.QAbstractTableModel):
         """Remove selected assay statistics and image.
         """
         self.beginRemoveRows(parent, row, row+count-1)
+        # Remove saved photo and statistics
+        for assay in self.__assays[row:row+count]:
+            if assay.photo is not None and os.path.exists(assay.photo):
+                os.remove(assay.photo)
         del(self.__assays[row:row+count])
         self.endRemoveRows()
         return True
-
-#     def removeAssay(self, index):
-#         self.beginRemoveRows(index, index.row(), index.row())
-#         del(self.__assays[index.row()])
-#         self.endRemoveRows()
-#         return True
 
     def setDataDir(self, directory):
         """Set specified directory for image and metadata storing.
@@ -174,7 +178,7 @@ class StatDataModel(QtCore.QAbstractTableModel):
 
     def scanForAssays(self):
         """Scan filesystem directory for images and it's metadata.
-        
+         
         Don't forget `setDataDir` to appropriate directory before.
         """
         if not self.isDataDir():
