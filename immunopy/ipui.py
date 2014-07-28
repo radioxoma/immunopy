@@ -169,12 +169,14 @@ class MicroscopeControl(QtGui.QGroupBox):
                 self.willRunContinuously.emit()
                 self.streaming_btn.setText('Stop')
                 self.cont_cbx.setEnabled(False)
+                self.binning.setEnabled(False)
             else:
                 self.willRunOnce.emit()
         else:
             self.willStop.emit()
             self.streaming_btn.setText('Start')
             self.cont_cbx.setEnabled(True)
+            self.binning.setEnabled(True)
 
     @QtCore.Slot(int)
     def change_scalename(self, index):

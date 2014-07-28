@@ -127,11 +127,13 @@ if __name__ == '__main__':
     splash = QtGui.QSplashScreen(QtGui.QPixmap("image/slide.png"),
         QtCore.Qt.WindowStaysOnTopHint)
     splash.show()
-    splash.showMessage("Loading tools...", color=QtCore.Qt.gray)
+    splash.showMessage("Loading statistics module...", color=QtCore.Qt.gray)
+    app.processEvents()
+    import statdata
+    splash.showMessage("Loading imaging toolset...", color=QtCore.Qt.gray)
     app.processEvents()
     import ipui
     import iptools
-    import statdata
     splash.showMessage("Loading Micro-manager...", color=QtCore.Qt.gray)
     app.processEvents()
     import mmanager
