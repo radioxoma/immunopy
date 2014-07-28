@@ -10,6 +10,7 @@ Operates with image and statistics data on filesystem.
 """
 
 import os
+import sys
 import datetime
 import csv
 import cStringIO
@@ -18,8 +19,6 @@ import locale
 from PySide import QtCore
 from PySide import QtGui
 from scipy import misc
-from PIL import TiffImagePlugin
-TiffImagePlugin.WRITE_LIBTIFF = True
 
 
 class UnicodeWriter(object):
@@ -163,7 +162,7 @@ class StatDataModel(QtCore.QAbstractTableModel):
                 305: "Immunopy",  # Software
                 306: assay.timestamp.strftime("%Y:%m:%d %H:%M:%S")}  # DateTime
             img.save(
-                imgpath.encode("utf-8"),
+                imgpath.encode(sys.getfilesystemencoding()),
                 format='TIFF',
                 compression="tiff_deflate",
                 tiffinfo=tiffinfo)
