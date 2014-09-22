@@ -228,12 +228,12 @@ class CellProcessor(object):
         # MULTICORE -----------------------------------------------------------
         if self.pool:
             hproc = self.pool.apply_async(worker, (hem, self.threshold_shift, self.peak_distance, self.min_size, self.max_size))
-            dproc = self.pool.apply_async(worker, (dab, self.threshold_shift + 10, self.peak_distance, self.min_size, self.max_size))
-            hemfiltered, hemfnum = hproc.get(timeout=5)
-            dabfiltered, dabfnum = dproc.get(timeout=5)
+            dproc = self.pool.apply_async(worker, (dab, self.threshold_shift, self.peak_distance, self.min_size, self.max_size))
+            hemfiltered, hemfnum = hproc.get(timeout=10)
+            dabfiltered, dabfnum = dproc.get(timeout=10)
         else:
             hemfiltered, hemfnum = worker(hem, self.threshold_shift, self.peak_distance, self.min_size, self.max_size)
-            dabfiltered, dabfnum = worker(dab, self.threshold_shift + 10, self.peak_distance, self.min_size, self.max_size)
+            dabfiltered, dabfnum = worker(dab, self.threshold_shift, self.peak_distance, self.min_size, self.max_size)
         # MULTICORE END -------------------------------------------------------
 
         # Stats
