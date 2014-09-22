@@ -102,7 +102,7 @@ class HistogramPlotter(object):
             self.gradient = None
 
     def plot(self, rgb):
-        """Return RGBA32 histogram.
+        """Return BGRA histogram picture.
         """
         rgba = self.blank.copy()
         histr = np.bincount(rgb[...,0].ravel()).astype(np.float32)
@@ -110,23 +110,23 @@ class HistogramPlotter(object):
         histb = np.bincount(rgb[...,2].ravel()).astype(np.float32)
         if self.gradient is not None:
             for k, c in enumerate(histr / histr.max() * self.height):
-                rgba[self.height-c:,k,0] = self.gradient[k]
+                rgba[self.height-c:,k,2] = self.gradient[k]
                 rgba[self.height-c:,k,3] = 255.
             for k, c in enumerate(histg / histg.max() * self.height):
                 rgba[self.height-c:,k,1] = self.gradient[k]
                 rgba[self.height-c:,k,3] = 255.
             for k, c in enumerate(histb / histb.max() * self.height):
-                rgba[self.height-c:,k,2] = self.gradient[k]
+                rgba[self.height-c:,k,0] = self.gradient[k]
                 rgba[self.height-c:,k,3] = 255.
         else:
             for k, c in enumerate(histr / histr.max() * self.height):
-                rgba[self.height-c:,k,0] = 255.
+                rgba[self.height-c:,k,2] = 255.
                 rgba[self.height-c:,k,3] = 150.
             for k, c in enumerate(histg / histg.max() * self.height):
                 rgba[self.height-c:,k,1] = 255.
                 rgba[self.height-c:,k,3] = 150.
             for k, c in enumerate(histb / histb.max() * self.height):
-                rgba[self.height-c:,k,2] = 255.
+                rgba[self.height-c:,k,0] = 255.
                 rgba[self.height-c:,k,3] = 150.
         return rgba
 
