@@ -33,8 +33,8 @@ class CMMCore(MMCorePy.CMMCore):
     def clearROI(self):
         self.frame = self.RGB32.copy()
     def getLastImage(self):
-        return self.frame
+        return self.frame.copy()
     def getImage(self):
-        return self.frame
+        return self.frame.copy()
     def popNextImage(self):
-        return self.frame
+        return self.frame.copy()
