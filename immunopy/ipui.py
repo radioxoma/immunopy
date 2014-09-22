@@ -12,6 +12,7 @@ Immunopy GUI primitives.
 import sys
 import time
 import numpy as np
+import cv2
 from PySide import QtCore
 from PySide import QtGui
 from PySide import QtOpenGL
@@ -109,8 +110,10 @@ class MicroscopeControl(QtGui.QGroupBox):
         
         self.form = QtGui.QFormLayout()
         self.in_vbox = QtGui.QVBoxLayout(self.parent)
+        self.horizontal = QtGui.QHBoxLayout(self.parent)
         self.vbox.addLayout(self.form)
         self.vbox.addLayout(self.in_vbox)
+        self.vbox.addLayout(self.horizontal)
         
         self.streaming_btn = QtGui.QPushButton('Start')
         self.form.addRow('Acquisition', self.streaming_btn)
@@ -157,6 +160,19 @@ class MicroscopeControl(QtGui.QGroupBox):
         self.histview.setAlignment(QtCore.Qt.AlignCenter)
         self.histview.setFixedSize(256, 100)
         self.in_vbox.addWidget(self.histview)
+        
+        self.horizontal.addWidget(QtGui.QLabel('R'))
+        self.sbx_adjust_r = QtGui.QSpinBox()
+        self.sbx_adjust_r.setRange(-254, 255)
+        self.horizontal.addWidget(self.sbx_adjust_r)
+        self.horizontal.addWidget(QtGui.QLabel('G'))
+        self.sbx_adjust_g = QtGui.QSpinBox()
+        self.sbx_adjust_g.setRange(-254, 255)
+        self.horizontal.addWidget(self.sbx_adjust_g)
+        self.horizontal.addWidget(QtGui.QLabel('B'))
+        self.sbx_adjust_b = QtGui.QSpinBox()
+        self.sbx_adjust_b.setRange(-254, 255)
+        self.horizontal.addWidget(self.sbx_adjust_b)
         
         self.willRunOnce.connect(self.parent.VProc.runOnce)
         self.willRunContinuously.connect(self.parent.VProc.runContinuous)
@@ -354,6 +370,7 @@ class VideoProcessor(QtCore.QObject):
         self.__model = statdata.StatDataModel()
         self.rgb32 = None
         self.rgb = None
+        self.__wb_shift = [0, 0, 0]  # RGB white balance
         self.out = None
         
         self.workTimer = QtCore.QTimer(parent=self)
@@ -378,6 +395,10 @@ class VideoProcessor(QtCore.QObject):
                     print('No frame')
             if self.rgb32 is not None:
                 self.rgb = iptools.rgb32asrgb(self.rgb32)
+                # Numpy does not provide saturated inplace math
+                self.rgb[...,0] = cv2.add(self.rgb[...,0], self.__wb_shift[0])
+                self.rgb[...,1] = cv2.add(self.rgb[...,1], self.__wb_shift[1])
+                self.rgb[...,2] = cv2.add(self.rgb[...,2], self.__wb_shift[2])
                 self.hist = self.HPlotter.plot(self.rgb)
                 self.histogramready.emit()
                 self.out = self.CProcessor.process(self.rgb)
@@ -455,6 +476,18 @@ class VideoProcessor(QtCore.QObject):
     @QtCore.Slot()
     def setPeakDistance(self, value):
         self.CProcessor.peak_distance = value
+    
+    @QtCore.Slot()
+    def setRShift(self, value):
+        self.__wb_shift[0] = value
+    
+    @QtCore.Slot()
+    def setGShift(self, value):
+        self.__wb_shift[1] = value
+        
+    @QtCore.Slot()
+    def setBShift(self, value):
+        self.__wb_shift[2] = value
 
 
 if __name__ == '__main__':

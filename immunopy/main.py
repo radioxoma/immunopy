@@ -67,6 +67,10 @@ class MainWindow(QtGui.QMainWindow):
         self.VProc.histogramready.connect(self.MControl.setHistogram)
         self.CMicro.scale_changed.connect(self.VProc.setScale)
         
+        self.MControl.sbx_adjust_r.valueChanged.connect(self.VProc.setRShift)
+        self.MControl.sbx_adjust_g.valueChanged.connect(self.VProc.setGShift)
+        self.MControl.sbx_adjust_b.valueChanged.connect(self.VProc.setBShift)
+        
         self.AControl.vtype.valueChanged.connect(self.VProc.setVtype)
         self.AControl.sizemax.valueChanged.connect(self.VProc.setMaxSize)
         self.AControl.sizemin.valueChanged.connect(self.VProc.setMinSize)
