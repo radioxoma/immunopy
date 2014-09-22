@@ -184,6 +184,13 @@ class StatDataModel(QtCore.QAbstractTableModel):
         self.endRemoveRows()
         return True
 
+    def dropAssays(self):
+        """Forget about collected assays and clear view.
+        """
+        self.beginRemoveRows(QtCore.QModelIndex(), 0, len(self.__assays) - 1)
+        self.__assays = list()
+        self.endRemoveRows()
+
     def setDataDir(self, directory):
         """Set specified directory for image and metadata storing.
         """
@@ -261,6 +268,8 @@ class StatisticsBrowser(QtGui.QWidget):
         self.hButtonLayout.addWidget(self.btnAdd)
         self.btnDel = QtGui.QPushButton('Delete')
         self.hButtonLayout.addWidget(self.btnDel)
+        self.btnClear = QtGui.QPushButton('Clear list')
+        self.hButtonLayout.addWidget(self.btnClear)
         self.cbxSaveImage = QtGui.QCheckBox('Save specimen photo')
         self.hButtonLayout.addWidget(self.cbxSaveImage)
         self.btnSetDir = QtGui.QPushButton('Set path')
@@ -280,6 +289,7 @@ class StatisticsBrowser(QtGui.QWidget):
         
         self.btnAdd.clicked.connect(self.askAssay)
         self.btnDel.clicked.connect(self.deleteSelectedRows)
+        self.btnClear.clicked.connect(self.dropAssays)
         self.btnSetDir.clicked.connect(self.setModelDataDir)
         self.cbxSaveImage.stateChanged.connect(self.toggleModelDataDir)
         self.btnExportCsv.clicked.connect(self.export)
@@ -295,6 +305,10 @@ class StatisticsBrowser(QtGui.QWidget):
         revRovs = sorted(list(uniqRows), reverse=True)
         for row in revRovs:
             self.model.removeRow(row)
+
+    @QtCore.Slot()
+    def dropAssays(self):
+        self.model.dropAssays()
 
     @QtCore.Slot()
     def setModelDataDir(self):
