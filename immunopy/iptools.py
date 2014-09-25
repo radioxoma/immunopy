@@ -44,7 +44,7 @@ class CalibMicro(QtCore.QObject):
                        '63': 7.2562287415035193E-02,
                        '100': 4.571E-02}
         self.binning = 1
-        self.scalename = objective_name  # objective name
+        self.scalename = objective_name
 
     @property
     def scale(self):
@@ -355,18 +355,15 @@ def normalize(img):
 
 
 def rescale(source, scale):
-    """If scale > 2 um/px, image size would be redused.
+    """If scale > 2 px/um, image will be downsampled.
     """
-    if scale == 2.0:  # pixels per um
-        return source
-    else:
-        scl_factor = 2.0 * scale
-        if scl_factor > 1:
-            print('WARNING: upscale')
-        fy = int(round(source.shape[0] * scl_factor))
-        fx = int(round(source.shape[1] * scl_factor))
-        # cv2.INTER_CUBIC
-        return cv2.resize(source, dsize=(fx, fy), interpolation=cv2.INTER_LINEAR)
+    scl_factor = scale / 0.5  # Target scale - 0.5 um/px (2 px/um)
+    if scl_factor > 1:
+        print('WARNING: upscale')
+    fy = int(round(source.shape[0] * scl_factor))
+    fx = int(round(source.shape[1] * scl_factor))
+    # cv2.INTER_CUBIC
+    return cv2.resize(source, dsize=(fx, fy), interpolation=cv2.INTER_LINEAR)
 
 
 def threshold_isodata(image, nbins=256, shift=None):
