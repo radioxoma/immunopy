@@ -10,6 +10,7 @@ Immunopy - an IHC image real time analyzer.
 """
 
 import sys
+import os
 from PySide import QtCore
 from PySide import QtGui
 
@@ -141,12 +142,13 @@ if __name__ == '__main__':
     splash.showMessage("Loading Micro-manager...", color=QtCore.Qt.gray)
     app.processEvents()
     import mmanager
+    module_dir = os.path.dirname(__file__)
     if FAKE_CAMERA:
         import MMCorePyExperimental as MMCorePy
-        MM_CONFIGURATION_NAME = "demo_camera.cfg"
+        MM_CONFIGURATION_NAME = os.path.join(module_dir, "demo_camera.cfg")
     else:
         import MMCorePy
-        MM_CONFIGURATION_NAME = "baumer_generic.cfg"
+        MM_CONFIGURATION_NAME = os.path.join(module_dir, "baumer_generic.cfg")
     window = MainWindow()
     window.show()
     splash.finish(window)
