@@ -15,7 +15,7 @@ from PySide import QtCore
 from PySide import QtGui
 
 MM_CIRCULAR_BUFFER = 100
-DEF_OBJECTIVE = '10'
+DEF_OBJECTIVE = '20'
 FAKE_CAMERA = True
 MM_DEBUG = False
 

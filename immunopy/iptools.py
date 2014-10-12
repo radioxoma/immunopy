@@ -143,7 +143,7 @@ class CellProcessor(object):
     def __init__(self, scale, colormap, mp=False):
         super(CellProcessor, self).__init__()
         self.threshold_shift = 20
-        self.min_size = 10
+        self.min_size = 80
         self.max_size = 3000
         self.vtype = 1
 
