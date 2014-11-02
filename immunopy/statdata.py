@@ -26,7 +26,7 @@ class UnicodeWriter(object):
     """
     def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
         self.queue = cStringIO.StringIO()
-        self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
+        self.writer = csv.writer(self.queue, dialect=dialect, quoting=csv.QUOTE_NONNUMERIC, **kwds)
         self.stream = f
         self.encoder = codecs.getincrementalencoder(encoding)()
 
@@ -46,12 +46,15 @@ class UnicodeWriter(object):
 class Assay(object):
     """Photo and metadata container.
     """
-    def __init__(self, cellfraction=None, dab_hemfraction=None,
-            dab_dabhemfraction=None, photo=None):
+    def __init__(self,
+            dab_cell_count=None,
+            hem_cell_count=None,
+            dab_dabhemfraction=None,
+            photo=None):
         super(Assay, self).__init__()
         self.timestamp = datetime.datetime.now()  # Creation time
-        self.cellfraction = cellfraction
-        self.dab_hemfraction = dab_hemfraction
+        self.dab_cell_count = dab_cell_count
+        self.hem_cell_count = hem_cell_count
         self.dab_dabhemfraction = dab_dabhemfraction
         self.photo = photo  # Numpy image array
         '''
@@ -65,8 +68,8 @@ class Assay(object):
         '''
 
     def __str__(self):
-        s = "Time %s, CF %.2f, DAB/HEM %.2f, DAB / DAB || HEM %.2f" % ( 
-            self.timestamp, self.cellfraction, self.dab_hemfraction,
+        s = "Time %s, DAB cells %d, HEM cells %d, DAB / DAB || HEM %.2f, %%" % ( 
+            self.timestamp, self.dab_cell_count, self.hem_cell_count,
             self.dab_dabhemfraction)
         return s
 
@@ -82,7 +85,7 @@ class StatDataModel(QtCore.QAbstractTableModel):
         self.__datadir = None
         self.__assays = list()
         self.__header = (
-            'Timestamp', 'Cell fraction', 'DAB/HEM', 'DAB / DAB|HEM', 'Photo')
+            'Timestamp', 'DAB cell count', 'HEM cell count', 'DAB / DAB|HEM, %', 'Photo')
         self.isSaveImage = False
 
     def rowCount(self, index=QtCore.QModelIndex(), parent=QtCore.QModelIndex()):
@@ -101,9 +104,9 @@ class StatDataModel(QtCore.QAbstractTableModel):
             if index.column() == 0:
                 return self.__assays[index.row()].timestamp.isoformat()
             elif index.column() == 1:
-                return str(self.__assays[index.row()].cellfraction)
+                return str(self.__assays[index.row()].dab_cell_count)
             elif index.column() == 2:
-                return str(self.__assays[index.row()].dab_hemfraction)
+                return str(self.__assays[index.row()].hem_cell_count)
             elif index.column() == 3:
                 return str(self.__assays[index.row()].dab_dabhemfraction)
             elif index.column() == 4:
@@ -222,8 +225,8 @@ class StatDataModel(QtCore.QAbstractTableModel):
         for a in self.__assays:
             table.append(
                 [unicode(a.timestamp.isoformat()),
-                 unicode(a.cellfraction),
-                 unicode(a.dab_hemfraction),
+                 unicode(a.dab_cell_count),
+                 unicode(a.hem_cell_count),
                  unicode(a.dab_dabhemfraction),
                  unicode(a.photo)])
         # File encoding will be same as it expected by Excel on machine where
@@ -355,9 +358,9 @@ class StatisticsBrowser(QtGui.QWidget):
             caption="Where to save *.csv file?",
             dir=self.model.getDataDir(),
             filter="CSV files (*.csv);; Any files (*)")[0]
-        # Need testing under Windows
-        # if not filepath.endswith(".csv"):
-        #     filepath += ".csv"
+        # Linux endswith workaround
+        if not filepath.endswith(".csv"):
+            filepath += ".csv"
         print(filepath)
         self.model.exportToCsv(filepath)
 

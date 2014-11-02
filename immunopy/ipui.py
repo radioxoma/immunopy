@@ -435,14 +435,16 @@ class VideoProcessor(QtCore.QObject):
         with QtCore.QMutexLocker(self.__lock):
             if self.__model.isSaveImage:
                 a = statdata.Assay(
-                    cellfraction=self.CProcessor.stCellFraction,
-                    dab_hemfraction=self.CProcessor.stDabHemFraction,
+                    dab_cell_count=self.CProcessor.st_dab_cell_count,
+                    hem_cell_count=self.CProcessor.st_hem_cell_count,
+#                     dab_hemfraction=self.CProcessor.stDabHemFraction,
                     dab_dabhemfraction=self.CProcessor.stDabDabHemFraction,
                     photo=self.rgb)
             else:
                 a = statdata.Assay(
-                    cellfraction=self.CProcessor.stCellFraction,
-                    dab_hemfraction=self.CProcessor.stDabHemFraction,
+                    dab_cell_count=self.CProcessor.st_dab_cell_count,
+                    hem_cell_count=self.CProcessor.st_hem_cell_count,
+#                     dab_hemfraction=self.CProcessor.stDabHemFraction,
                     dab_dabhemfraction=self.CProcessor.stDabDabHemFraction)
             self.__model.appendAssay(a)
             self.modelGotAssay.emit()

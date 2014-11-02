@@ -155,7 +155,9 @@ class CellProcessor(object):
             self.pool = Pool(processes=2)
         else:
             self.pool = None
-        self.stCellFraction = 0.0
+            
+        self.st_dab_cell_count = 0
+        self.st_hem_cell_count = 0
         self.stDabHemFraction = 0.0
         self.stDabDabHemFraction = 0.0
 
@@ -227,18 +229,18 @@ class CellProcessor(object):
 
         # MULTICORE -----------------------------------------------------------
         if self.pool:
-            hproc = self.pool.apply_async(worker, (hem, self.threshold_shift, self.peak_distance, self.min_size, self.max_size))
             dproc = self.pool.apply_async(worker, (dab, self.threshold_shift, self.peak_distance, self.min_size, self.max_size))
-            hemfiltered, hemfnum = hproc.get(timeout=10)
-            dabfiltered, dabfnum = dproc.get(timeout=10)
+            hproc = self.pool.apply_async(worker, (hem, self.threshold_shift, self.peak_distance, self.min_size, self.max_size))
+            dabfiltered, self.st_dab_cell_count = dproc.get(timeout=10)
+            hemfiltered, self.st_hem_cell_count = hproc.get(timeout=10)
         else:
-            hemfiltered, hemfnum = worker(hem, self.threshold_shift, self.peak_distance, self.min_size, self.max_size)
-            dabfiltered, dabfnum = worker(dab, self.threshold_shift, self.peak_distance, self.min_size, self.max_size)
+            dabfiltered, self.st_dab_cell_count = worker(dab, self.threshold_shift, self.peak_distance, self.min_size, self.max_size)
+            hemfiltered, self.st_hem_cell_count = worker(hem, self.threshold_shift, self.peak_distance, self.min_size, self.max_size)
         # MULTICORE END -------------------------------------------------------
 
         # Stats
-        self.stCellFraction =  float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100
-        self.stDabHemFraction = areaFraction(hemfiltered, dabfiltered) * 100
+        # self.stCellFraction =  float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100
+        # self.stDabHemFraction = areaFraction(hemfiltered, dabfiltered) * 100
         self.stDabDabHemFraction = areaDisjFraction(hemfiltered, dabfiltered) * 100
 
         # Visualization
@@ -252,16 +254,14 @@ class CellProcessor(object):
             overlay = drawOverlay(scaled, dabfiltered, hemfiltered)
             dabcolored = lut.apply_lut(dabfiltered, self.colormap)
             hemcolored = lut.apply_lut(hemfiltered, self.colormap)
-            cv2.putText(scaled, 'Cell fraction %.1f %%' % self.stCellFraction, (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
-            cv2.putText(scaled, 'Area fr. %.1f, disj %.1f' % (self.stDabHemFraction, self.stDabDabHemFraction), (12,120), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
+            cv2.putText(scaled, 'Area disj fr. %.1f %%' % (self.stDabDabHemFraction), (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
             cv2.putText(overlay, 'Colocalization', (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
-            cv2.putText(dabcolored, 'DAB %3.d objects' % dabfnum, (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
-            cv2.putText(hemcolored, 'HEM %3.d objects' % hemfnum, (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
+            cv2.putText(dabcolored, 'DAB %3.d objects' % self.st_dab_cell_count, (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
+            cv2.putText(hemcolored, 'HEM %3.d objects' % self.st_hem_cell_count, (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
             return montage(scaled, hemcolored, overlay, dabcolored)
 
-        cv2.putText(overlay, 'Num D%3.d/H%3.d, %.2f %%' % (dabfnum, hemfnum, self.stCellFraction), (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
-        cv2.putText(overlay, 'DAB/HEM %.2f' % self.stDabHemFraction, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
-        cv2.putText(overlay, 'DAB/DAB||HEM %.2f' % self.stDabDabHemFraction, (2,85), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+        cv2.putText(overlay, 'Num D%3.d/H%3.d' % (self.st_dab_cell_count, self.st_hem_cell_count), (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+        cv2.putText(overlay, 'DAB/DAB||HEM %.2f %%' % self.stDabDabHemFraction, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
         return overlay
 
 
