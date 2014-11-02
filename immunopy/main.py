@@ -144,7 +144,7 @@ if __name__ == '__main__':
     import mmanager
     module_dir = os.path.dirname(__file__)
     if FAKE_CAMERA:
-        import MMCorePyExperimental as MMCorePy
+        import MMCorePyFake as MMCorePy
         MM_CONFIGURATION_NAME = os.path.join(module_dir, "demo_camera.cfg")
     else:
         import MMCorePy
