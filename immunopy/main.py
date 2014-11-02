@@ -145,10 +145,10 @@ if __name__ == '__main__':
     module_dir = os.path.dirname(__file__)
     if FAKE_CAMERA:
         import MMCorePyFake as MMCorePy
-        MM_CONFIGURATION_NAME = os.path.join(module_dir, "demo_camera.cfg")
+        MM_CONFIGURATION_NAME = os.path.join(module_dir, "camera_demo.cfg")
     else:
         import MMCorePy
-        MM_CONFIGURATION_NAME = os.path.join(module_dir, "baumer_generic.cfg")
+        MM_CONFIGURATION_NAME = os.path.join(module_dir, "camera_baumer.cfg")
     window = MainWindow()
     window.show()
     splash.finish(window)

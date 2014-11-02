@@ -18,9 +18,9 @@ import lut
 
 MAGNIFICATION = '10'
 
-# DEVICE = ['Camera', 'DemoCamera', 'DCam']
+DEVICE = ['Camera', 'DemoCamera', 'DCam']
 # DEVICE = ['Camera', 'OpenCVgrabber', 'OpenCVgrabber']
-DEVICE = ['Camera', 'BaumerOptronic', 'BaumerOptronic']
+# DEVICE = ['Camera', 'BaumerOptronic', 'BaumerOptronic']
 
 
 def set_threshold_shift(value):
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     mmc.setCameraDevice(DEVICE[0])
     # mmc.setProperty(DEVICE[0], 'Binning', '2')
     mmc.setProperty(DEVICE[0], 'PixelType', '32bitRGB')
-    iptools.setMmcResolution(mmc, 512, 512)
+    mmc.setROI(0, 0, 512, 512)
     mmc.snapImage()  # Baumer bug workaround
     cv2.namedWindow('Overlay')
     cv2.namedWindow('Controls', flags=cv2.WINDOW_NORMAL | cv2.WINDOW_AUTOSIZE)
