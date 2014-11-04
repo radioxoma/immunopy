@@ -437,15 +437,13 @@ class VideoProcessor(QtCore.QObject):
                 a = statdata.Assay(
                     dab_cell_count=self.CProcessor.st_dab_cell_count,
                     hem_cell_count=self.CProcessor.st_hem_cell_count,
-#                     dab_hemfraction=self.CProcessor.stDabHemFraction,
-                    dab_dabhemfraction=self.CProcessor.stDabDabHemFraction,
+                    dab_dabhemfraction=self.CProcessor.st_dabdabhem_fraction,
                     photo=self.rgb)
             else:
                 a = statdata.Assay(
                     dab_cell_count=self.CProcessor.st_dab_cell_count,
                     hem_cell_count=self.CProcessor.st_hem_cell_count,
-#                     dab_hemfraction=self.CProcessor.stDabHemFraction,
-                    dab_dabhemfraction=self.CProcessor.stDabDabHemFraction)
+                    dab_dabhemfraction=self.CProcessor.st_dabdabhem_fraction)
             self.__model.appendAssay(a)
             self.modelGotAssay.emit()
     

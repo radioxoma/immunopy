@@ -28,7 +28,6 @@ class CalibMicro(QtCore.QObject):
 
     TODO:
         * Use binning
-        * Check 100 magnification
     """
     
     scale_changed = QtCore.Signal(float)
@@ -43,7 +42,7 @@ class CalibMicro(QtCore.QObject):
                        '20': 2.2857120535736084E-01,
                        '63': 7.2562287415035193E-02,
                        '100': 4.571E-02}
-        self.binning = 1
+        self.binning = 1  # Still not using
         self.scalename = objective_name
 
     @property
@@ -104,31 +103,31 @@ class HistogramPlotter(object):
     def plot(self, rgb):
         """Return BGRA histogram picture.
         """
-        rgba = self.blank.copy()
+        bgra = self.blank.copy()
         histr = np.bincount(rgb[...,0].ravel()).astype(np.float32)
         histg = np.bincount(rgb[...,1].ravel()).astype(np.float32)
         histb = np.bincount(rgb[...,2].ravel()).astype(np.float32)
         if self.gradient is not None:
-            for k, c in enumerate(histr / histr.max() * self.height):
-                rgba[self.height-c:,k,2] = self.gradient[k]
-                rgba[self.height-c:,k,3] = 255.
-            for k, c in enumerate(histg / histg.max() * self.height):
-                rgba[self.height-c:,k,1] = self.gradient[k]
-                rgba[self.height-c:,k,3] = 255.
             for k, c in enumerate(histb / histb.max() * self.height):
-                rgba[self.height-c:,k,0] = self.gradient[k]
-                rgba[self.height-c:,k,3] = 255.
+                bgra[self.height-c:,k,0] = self.gradient[k]
+                bgra[self.height-c:,k,3] = 255.
+            for k, c in enumerate(histg / histg.max() * self.height):
+                bgra[self.height-c:,k,1] = self.gradient[k]
+                bgra[self.height-c:,k,3] = 255.
+            for k, c in enumerate(histr / histr.max() * self.height):
+                bgra[self.height-c:,k,2] = self.gradient[k]
+                bgra[self.height-c:,k,3] = 255.
         else:
-            for k, c in enumerate(histr / histr.max() * self.height):
-                rgba[self.height-c:,k,2] = 255.
-                rgba[self.height-c:,k,3] = 150.
-            for k, c in enumerate(histg / histg.max() * self.height):
-                rgba[self.height-c:,k,1] = 255.
-                rgba[self.height-c:,k,3] = 150.
             for k, c in enumerate(histb / histb.max() * self.height):
-                rgba[self.height-c:,k,0] = 255.
-                rgba[self.height-c:,k,3] = 150.
-        return rgba
+                bgra[self.height-c:,k,0] = 255.
+                bgra[self.height-c:,k,3] = 150.
+            for k, c in enumerate(histg / histg.max() * self.height):
+                bgra[self.height-c:,k,1] = 255.
+                bgra[self.height-c:,k,3] = 150.
+            for k, c in enumerate(histr / histr.max() * self.height):
+                bgra[self.height-c:,k,2] = 255.
+                bgra[self.height-c:,k,3] = 150.
+        return bgra
 
 
 class CellProcessor(object):
@@ -158,55 +157,54 @@ class CellProcessor(object):
             
         self.st_dab_cell_count = 0
         self.st_hem_cell_count = 0
-        self.stDabHemFraction = 0.0
-        self.stDabDabHemFraction = 0.0
+        self.st_dabdabhem_fraction = 0.0
 
     @property
     def scale(self):
-        return self._scale
+        return self.__scale
     @scale.setter
     def scale(self, value):
         assert(isinstance(value, float))
-        self._scale = value
+        self.__scale = value
         print('Scale changed %s') % self.scale
 
     @property
     def vtype(self):
-        return self._vtype
+        return self.__vtype
     @vtype.setter
     def vtype(self, value):
-        self._vtype = value
+        self.__vtype = value
 
     @property
     def threshold_shift(self):
-        return self._threshold_shift
+        return self.__threshold_shift
     @threshold_shift.setter
     def threshold_shift(self, value):
-        self._threshold_shift = value
+        self.__threshold_shift = value
 
     @property
     def min_size(self):
-        return self._min_size
+        return self.__min_size
     @min_size.setter
     def min_size(self, value):
         if value > 0:
-            self._min_size = value
+            self.__min_size = value
 
     @property
     def max_size(self):
-        return self._max_size
+        return self.__max_size
     @max_size.setter
     def max_size(self, value):
         if value > 0:
-            self._max_size = value
+            self.__max_size = value
 
     @property
     def peak_distance(self):
-        return self._peak_distance
+        return self.__peak_distance
     @peak_distance.setter
     def peak_distance(self, value):
         if value > 0:
-            self._peak_distance = value
+            self.__peak_distance = value
 
     def process(self, image):
         """Segmentation and statistical calculation.
@@ -241,7 +239,7 @@ class CellProcessor(object):
         # Stats
         # self.stCellFraction =  float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100
         # self.stDabHemFraction = areaFraction(hemfiltered, dabfiltered) * 100
-        self.stDabDabHemFraction = areaDisjFraction(hemfiltered, dabfiltered) * 100
+        self.st_dabdabhem_fraction = areaDisjFraction(hemfiltered, dabfiltered) * 100
 
         # Visualization
         if self.vtype == 1:
@@ -254,14 +252,14 @@ class CellProcessor(object):
             overlay = drawOverlay(scaled, dabfiltered, hemfiltered)
             dabcolored = lut.apply_lut(dabfiltered, self.colormap)
             hemcolored = lut.apply_lut(hemfiltered, self.colormap)
-            cv2.putText(scaled, 'Area disj fr. %.1f %%' % (self.stDabDabHemFraction), (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
+            cv2.putText(scaled, 'Area disj fr. %.1f %%' % (self.st_dabdabhem_fraction), (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
             cv2.putText(overlay, 'Colocalization', (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
             cv2.putText(dabcolored, 'DAB %3.d objects' % self.st_dab_cell_count, (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
             cv2.putText(hemcolored, 'HEM %3.d objects' % self.st_hem_cell_count, (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
             return montage(scaled, hemcolored, overlay, dabcolored)
 
         cv2.putText(overlay, 'Num D%3.d/H%3.d' % (self.st_dab_cell_count, self.st_hem_cell_count), (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
-        cv2.putText(overlay, 'DAB/DAB||HEM %.2f %%' % self.stDabDabHemFraction, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+        cv2.putText(overlay, 'DAB/DAB||HEM %.2f %%' % self.st_dabdabhem_fraction, (2,55), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
         return overlay
 
 
