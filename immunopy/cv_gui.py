@@ -45,11 +45,9 @@ def set_vtype(value):
 
 
 if __name__ == '__main__':
-    CMicro = iptools.CalibMicro(MAGNIFICATION)
-    SCALE = CMicro.scale
-    CProcessor = iptools.CellProcessor(scale=SCALE, colormap=lut.random_jet(), mp=True)
-    print('curscale %f') % CMicro.scale
-    print('um2px %f') % SCALE
+    CMicro = iptools.CalibMicro(objective=MAGNIFICATION)
+    CProcessor = iptools.CellProcessor(scale=CMicro.scale, colormap=lut.random_jet(), mp=True)
+    print('%f um/px') % CMicro.scale
 
     mmc = MMCorePy.CMMCore()
     print('ImageBufferSize %f' % mmc.getImageBufferSize())  # Returns the size of the internal image buffer.

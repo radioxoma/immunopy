@@ -34,7 +34,7 @@ class MainWindow(QtGui.QMainWindow):
             self.mmc, deviceLabel=self.mmc.getCameraDevice())
         self.MPBrowser = mmanager.MicromanagerPropertyBrowser(self.MPModel)
 
-        self.CMicro = iptools.CalibMicro(DEF_OBJECTIVE)
+        self.CMicro = iptools.CalibMicro(objective=DEF_OBJECTIVE)
 
         self.workThread = QtCore.QThread()
         self.VProc = ipui.VideoProcessor(mmcore=self.mmc, parent=self)

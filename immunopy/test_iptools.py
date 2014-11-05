@@ -14,22 +14,22 @@ from iptools import CalibMicro
 class Test(unittest.TestCase):
 
     def testInstance(self):
-        CMicro = CalibMicro('20')
+        CMicro = CalibMicro(objective='20')
         assert(0.22 < CMicro.scale < 0.23)
 
     def testScaleSwitching(self):
-        CMicro = CalibMicro('20')
-        CMicro.scale = '10'
+        CMicro = CalibMicro(objective='100')
+        CMicro.scalename = '20'
+        CMicro.scalename = '10'
         assert(0.45 < CMicro.scale < 0.46)
         
     def testUm2px(self):
-        CMicro = CalibMicro('20')
+        CMicro = CalibMicro(objective='20')
         assert(43 < CMicro.um2px(10) < 44)
         
     def testPx2um(self):
-        CMicro = CalibMicro('20')
+        CMicro = CalibMicro(objective='20')
         assert(9.5 < CMicro.px2um(43) < 10.1)
 
 if __name__ == "__main__":
-    #import sys;sys.argv = ['', 'Test.testCalibration']
     unittest.main()

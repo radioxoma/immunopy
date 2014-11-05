@@ -24,7 +24,7 @@ import lut
 class CalibMicro(QtCore.QObject):
     """Microscope objective calibration and size conversion.
 
-    Instance it with default objective name (e.g. '20').
+    Instance it with default objective name (e.g. '20') or scale in um/px.
 
     TODO:
         * Use binning
@@ -32,60 +32,78 @@ class CalibMicro(QtCore.QObject):
     
     scale_changed = QtCore.Signal(float)
 
-    def __init__(self, objective_name):
-        """Objective _scales (um/px) from Leica Acquisition Suite *.cal.xml
+    def __init__(self, objective=None, scale=None):
+        """Objective __scales (um/px) from Leica Acquisition Suite *.cal.xml
         files for Leica DMI 2000 optical microscope.
         """
         super(CalibMicro, self).__init__()
-        self._scales = {'5': 9.1428482142944335E-01,
-                       '10': 4.5714241071472167E-01,
-                       '20': 2.2857120535736084E-01,
-                       '63': 7.2562287415035193E-02,
-                       '100': 4.571E-02}
+        self.__scales = { '5': 9.1428482142944335E-01,
+                         '10': 4.5714241071472167E-01,
+                         '20': 2.2857120535736084E-01,
+                         '63': 7.2562287415035193E-02,
+                        '100': 4.571E-02}
         self.binning = 1  # Still not using
-        self.scalename = objective_name
+        if objective is not None:
+            self.scalename = objective
+        elif scale is not None:
+            self.scale = scale
+        else:
+            ValueError("Must specify default objective name or scale.")
 
     @property
     def scale(self):
-        """Get current scale px/um."""
-        return self._curr_scale
+        """Get current scale in um/px."""
+        return self.__curr_scale  # um/px!
+    @scale.setter
+    def scale(self, value):
+        """Set current scale in um/px."""
+        if isinstance(value, str) and value in self.__scales:
+            RuntimeWarning(
+                """There is objective name '%s' same as argument. Are you
+                really wanted to use 'scale' property?""" % \
+                self.__scales[value])
+        elif isinstance(value, float):
+            self.__curr_scale = value
+        else:
+            raise ValueError("Wrong argument type %s") % type(value)
 
     @property
     def scalename(self):
         """Get current scalename (objective name)."""
-        return self._curr_scalename
+        return self.__curr_scale_name
     @scalename.setter
     def scalename(self, value):
         """Set microscope objective scale by available scalename."""
         assert(isinstance(value, str))
-        if value not in self._scales:
-            raise ValueError('Unknown microscope objective name')
-        self._curr_scale = self._scales[value]
-        self._curr_scalename = value
-        self.scale_changed.emit(self.scale)
+        if value not in self.__scales:
+            raise ValueError("Unknown microscope objective name")
+        self.__curr_scale = self.__scales[value]
+        self.__curr_scale_name = value
+        self.scale_changed.emit(self.__curr_scale)
             
-    def um2px(self, um, scale=None):
-        """Convert um to pixel line."""
-        return um / self._curr_scale
+    def um2px(self, um=1):
+        """Convert um to pixel line by current scale"""
+        return um / self.__curr_scale
 
-    def px2um(self, um, scale=None):
-        """Convert pixel line to um."""
-        return um * self._curr_scale
+    def px2um(self, px=1):
+        """Convert pixel line to um by current scale."""
+        return px * self.__curr_scale
 
     def um2circle(self, diameter):
-        """Диаметр (um) в площадь эквивалентного круга в px."""
+        """Diameter (um) to area of equal circle in px."""
         return np.pi * (self.um2px(diameter) / 2.0) ** 2
 
     def um2rect(self, diameter):
-        """Диаметр (um) в площадь эквивалентного квадрата в px."""
+        """Diameter (um) to area of equal rectangle in px."""
         return self.um2px(diameter) ** 2
 
     # def set_all_scales(self):
     #     pass
 
     def get_all_scalenames(self):
-        """Scale list sorted by scale."""
-        return sorted(self._scales.iterkeys(), key=self._scales.__getitem__, reverse=True)
+        """Scale names list sorted from lesser to bigger magnification."""
+        return sorted(self.__scales.iterkeys(),
+                      key=self.__scales.__getitem__, reverse=True)
 
 
 class HistogramPlotter(object):
@@ -167,7 +185,7 @@ class CellProcessor(object):
     def scale(self, value):
         assert(isinstance(value, float))
         self.__scale = value
-        print('Scale changed %s') % self.scale
+        print('Scale changed to %s um/px') % self.__scale
 
     @property
     def vtype(self):
@@ -230,7 +248,7 @@ class CellProcessor(object):
         meaned = cv2.blur(rgb, (self.blur, self.blur))
 
         # Resize to fixed scale 
-        scaled = rescale(meaned, self.scale)
+        scaled = rescale(meaned, self.__scale)
 
         # Unmix stains
         hdx = separate_stains(scaled, hdx_from_rgb)
@@ -373,6 +391,8 @@ def normalize(img):
 
 def rescale(source, scale):
     """If scale > 2 px/um, image will be downsampled.
+    
+    scale in um/px
     """
     scl_factor = scale / 0.5  # Target scale - 0.5 um/px (2 px/um)
     if scl_factor > 1:

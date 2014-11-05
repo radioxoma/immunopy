@@ -27,7 +27,7 @@ def CV_FOURCC(c1, c2, c3, c4):
 
 
 if __name__ == '__main__':
-    CMicro = iptools.CalibMicro(MAGNIFICATION)
+    CMicro = iptools.CalibMicro(objective=MAGNIFICATION)
     CProcessor = iptools.CellProcessor(
         scale=CMicro.scale, colormap=lut.random_jet(), mp=True)
     CProcessor.vtype = 4
