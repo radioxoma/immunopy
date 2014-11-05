@@ -395,13 +395,7 @@ class VideoProcessor(QtCore.QObject):
                     print('No frame')
             if self.rgb32 is not None:
                 self.rgb = iptools.rgb32asrgb(self.rgb32)
-                # Numpy does not provide saturated inplace math
-                if self.__wb_shift[0] != 0:
-                    self.rgb[...,0] = cv2.add(self.rgb[...,0], self.__wb_shift[0])
-                if self.__wb_shift[1] != 0:
-                    self.rgb[...,1] = cv2.add(self.rgb[...,1], self.__wb_shift[1])
-                if self.__wb_shift[2] != 0:
-                    self.rgb[...,2] = cv2.add(self.rgb[...,2], self.__wb_shift[2])
+                iptools.correct_wb(self.rgb, self.__wb_shift)
                 self.hist = self.HPlotter.plot(self.rgb)
                 self.histogramready.emit()
                 self.out = self.CProcessor.process(self.rgb)

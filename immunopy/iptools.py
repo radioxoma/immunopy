@@ -141,6 +141,7 @@ class CellProcessor(object):
     """
     def __init__(self, scale, colormap, mp=False):
         super(CellProcessor, self).__init__()
+        self.white_balance_shift = [0, 0, 0]  # RGB colors shift
         self.threshold_shift = 20
         self.min_size = 80
         self.max_size = 3000
@@ -176,6 +177,16 @@ class CellProcessor(object):
         self.__vtype = value
 
     @property
+    def white_balance_shift(self):
+        return self.__white_balance_shift
+    @white_balance_shift.setter
+    def white_balance_shift(self, value):
+        if not isinstance(value, (list, tuple)) or len(value) != 3:
+            raise ValueError("White balance correction value must be present \
+                as (R, G, B) list or tuple")
+        self.__white_balance_shift = value
+
+    @property
     def threshold_shift(self):
         return self.__threshold_shift
     @threshold_shift.setter
@@ -208,11 +219,12 @@ class CellProcessor(object):
 
     def process(self, image):
         """Segmentation and statistical calculation.
-        """
+        """        
+        # Light source correction
+        # correct_wb(image, self.__white_balance_shift)
         if self.vtype == 0:
             return image
         rgb = image.copy()
-        # Shading correction
 
         # Enhancement
         meaned = cv2.blur(rgb, (self.blur, self.blur))
@@ -338,9 +350,16 @@ def setMmcResolution(mmc, width, height):
     mmc.setROI(x, y, width, height)
 
 
-def correct_background():
-    """normalisation, white balance, etc"""
-    pass
+def correct_wb(rgb, rgb_shift):
+    """Correct white balance inplace.
+    """
+    # Numpy does not provide saturated inplace math
+    if rgb_shift[0] != 0:
+        rgb[...,0] = cv2.add(rgb[...,0], rgb_shift[0])
+    if rgb_shift[1] != 0:
+        rgb[...,1] = cv2.add(rgb[...,1], rgb_shift[1])
+    if rgb_shift[2] != 0:
+        rgb[...,2] = cv2.add(rgb[...,2], rgb_shift[2])
 
 
 def normalize(img):
