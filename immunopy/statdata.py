@@ -26,7 +26,8 @@ class UnicodeWriter(object):
     """
     def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
         self.queue = cStringIO.StringIO()
-        self.writer = csv.writer(self.queue, dialect=dialect, quoting=csv.QUOTE_NONNUMERIC, **kwds)
+        self.writer = csv.writer(
+            self.queue, dialect=dialect, quoting=csv.QUOTE_NONNUMERIC, **kwds)
         self.stream = f
         self.encoder = codecs.getincrementalencoder(encoding)()
 
@@ -44,19 +45,15 @@ class UnicodeWriter(object):
 
 
 class Assay(object):
-    """Photo and metadata container.
+    """Metadata container.
     """
-    def __init__(self,
-            dab_cell_count=None,
-            hem_cell_count=None,
-            dab_dabhemfraction=None,
-            photo=None):
+    def __init__(self, dab_cell_count, hem_cell_count, dab_dabhemfraction):
         super(Assay, self).__init__()
         self.timestamp = datetime.datetime.now()  # Creation time
         self.dab_cell_count = dab_cell_count
         self.hem_cell_count = hem_cell_count
         self.dab_dabhemfraction = dab_dabhemfraction
-        self.photo = photo  # Numpy image array
+        self.img_path = None
         '''
         self.id = 'UUID'  # Unique identifier
         self.name = str  # Arbitrary filename string
@@ -110,7 +107,7 @@ class StatDataModel(QtCore.QAbstractTableModel):
             elif index.column() == 3:
                 return str(self.__assays[index.row()].dab_dabhemfraction)
             elif index.column() == 4:
-                if self.__assays[index.row()].photo is not None:
+                if self.__assays[index.row()].img_path is not None:
                     return 'Yes'
         return None
 
@@ -141,7 +138,7 @@ class StatDataModel(QtCore.QAbstractTableModel):
         self.endInsertRows()
         return True
 
-    def appendAssay(self, assay):
+    def appendAssay(self, assay, image=None):
         """Add statistics and image (and save it on disk) to end of the table.
         
         Replaces both insertRow and setData.
@@ -156,8 +153,8 @@ class StatDataModel(QtCore.QAbstractTableModel):
         """
         total_rows = self.rowCount()
         self.beginInsertRows(QtCore.QModelIndex(), total_rows, total_rows)
-        if assay.photo is not None:
-            img = misc.toimage(assay.photo)
+        if image is not None:
+            img = misc.toimage(image)
             imgpath = os.path.join(
                 self.__datadir, assay.timestamp.strftime("%Y%m%d-%H%M%S.tif"))
             tiffinfo = {
@@ -169,7 +166,7 @@ class StatDataModel(QtCore.QAbstractTableModel):
                 format='TIFF',
                 compression="tiff_deflate",
                 tiffinfo=tiffinfo)
-            assay.photo = imgpath  # May be bad practice
+            assay.img_path = imgpath
         self.__assays.append(assay)
         print("Appending assay %s" % assay)
         self.endInsertRows()
@@ -181,8 +178,8 @@ class StatDataModel(QtCore.QAbstractTableModel):
         self.beginRemoveRows(parent, row, row+count-1)
         # Remove saved photo and statistics
         for assay in self.__assays[row:row+count]:
-            if assay.photo is not None and os.path.exists(assay.photo):
-                os.remove(assay.photo)
+            if assay.img_path is not None and os.path.exists(assay.img_path):
+                os.remove(assay.img_path)
         del(self.__assays[row:row+count])
         self.endRemoveRows()
         return True
@@ -228,7 +225,7 @@ class StatDataModel(QtCore.QAbstractTableModel):
                  unicode(a.dab_cell_count),
                  unicode(a.hem_cell_count),
                  unicode(a.dab_dabhemfraction),
-                 unicode(a.photo)])
+                 unicode(a.img_path)])
         # File encoding will be same as it expected by Excel on machine where
         # this file was created.
         encoding = locale.getpreferredencoding()
@@ -273,7 +270,7 @@ class StatisticsBrowser(QtGui.QWidget):
         self.hButtonLayout.addWidget(self.btnDel)
         self.btnClear = QtGui.QPushButton('Clear list')
         self.hButtonLayout.addWidget(self.btnClear)
-        self.cbxSaveImage = QtGui.QCheckBox('Save specimen photo')
+        self.cbxSaveImage = QtGui.QCheckBox('Save specimen image')
         self.hButtonLayout.addWidget(self.cbxSaveImage)
         self.btnSetDir = QtGui.QPushButton('Set path')
         self.hButtonLayout.addWidget(self.btnSetDir)
@@ -366,7 +363,6 @@ class StatisticsBrowser(QtGui.QWidget):
 
 
 if __name__ == '__main__':
-    import sys
     app = QtGui.QApplication(sys.argv)
     model = StatDataModel()
     model.appendAssay(Assay(cellfraction=2.2, dab_hemfraction=3.5, dab_dabhemfraction=0.1, photo=None))

@@ -19,6 +19,7 @@ from skimage.feature import peak_local_max
 import cv2
 from PySide import QtCore
 import lut
+import statdata
 
 
 class CalibMicro(QtCore.QObject):
@@ -177,6 +178,14 @@ class CellProcessor(object):
         self.st_dab_cell_count = 0
         self.st_hem_cell_count = 0
         self.st_dabdabhem_fraction = 0.0
+        
+    def take_assay(self):
+        """Return assay object for processed image.
+        """
+        return statdata.Assay(
+            dab_cell_count=self.st_dab_cell_count,
+            hem_cell_count=self.st_hem_cell_count,
+            dab_dabhemfraction=self.st_dabdabhem_fraction)
 
     @property
     def scale(self):
@@ -270,7 +279,7 @@ class CellProcessor(object):
         # self.stCellFraction =  float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100
         # self.stDabHemFraction = areaFraction(hemfiltered, dabfiltered) * 100
         self.st_dabdabhem_fraction = areaDisjFraction(hemfiltered, dabfiltered) * 100
-
+        
         # Visualization
         if self.vtype == 1:
             overlay = drawOverlay(scaled, dabfiltered, hemfiltered)

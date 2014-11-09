@@ -11,8 +11,6 @@ Immunopy GUI primitives.
 
 import sys
 import time
-import numpy as np
-import cv2
 from PySide import QtCore
 from PySide import QtGui
 from PySide import QtOpenGL
@@ -428,17 +426,10 @@ class VideoProcessor(QtCore.QObject):
         """
         with QtCore.QMutexLocker(self.__lock):
             if self.__model.isSaveImage:
-                a = statdata.Assay(
-                    dab_cell_count=self.CProcessor.st_dab_cell_count,
-                    hem_cell_count=self.CProcessor.st_hem_cell_count,
-                    dab_dabhemfraction=self.CProcessor.st_dabdabhem_fraction,
-                    photo=self.rgb)
+                self.__model.appendAssay(self.CProcessor.take_assay(),
+                    image=self.rgb)
             else:
-                a = statdata.Assay(
-                    dab_cell_count=self.CProcessor.st_dab_cell_count,
-                    hem_cell_count=self.CProcessor.st_hem_cell_count,
-                    dab_dabhemfraction=self.CProcessor.st_dabdabhem_fraction)
-            self.__model.appendAssay(a)
+                self.__model.appendAssay(self.CProcessor.take_assay())
             self.modelGotAssay.emit()
     
     def getModel(self):
