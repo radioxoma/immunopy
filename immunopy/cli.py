@@ -36,8 +36,11 @@ def main(args):
 
     CMicro = iptools.CalibMicro(scale=args.scale)  # px/um
     CProcessor = iptools.CellProcessor(
-        scale=CMicro.scale, colormap=lut.random_jet(), mp=True)    
-
+        scale=CMicro.scale, colormap=lut.random_jet(), mp=args.mp)    
+    if args.dab_shift:
+        CProcessor.th_dab_shift = args.dab_shift
+    if args.hem_shift:
+        CProcessor.th_hem_shift = args.hem_shift
     total_num = float(len(assay_list))
     result_list = list()
     for num, row in enumerate(assay_list, 1):
@@ -71,7 +74,10 @@ def main(args):
 #         if num > 1:
 #             break
 
-    out_csv_filename = os.path.join(csv_dir, protein_name + '_ip.csv')
+    if args.out:
+        out_csv_filename = os.path.join(os.getcwdu(), args.out)
+    else:
+        out_csv_filename = os.path.join(csv_dir, protein_name + '_ip.csv')
     with open(out_csv_filename, mode='wb') as f:
         writer = csv.writer(f, dialect=csv.excel, delimiter=';')
         header.extend(["DAB cell count", "HEM cell count", "DAB / DAB|HEM, %", "Compliance"])
@@ -83,6 +89,10 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__description__)
-    parser.add_argument("file", help="An properly formatted file to process. E.g. 'ENSG00000148773.csv' (must be called same as protein_name folder)")
-    parser.add_argument("scale", type=float, help="Image scale in ?")
+    parser.add_argument("file", help="An properly formatted file to process. E.g. 'ENSG00000148773.csv' (must be called same as 'protein_name' folder)")
+    parser.add_argument("scale", type=float, help="Image scale in um/px")
+    parser.add_argument("--out", help="Output filename (it's a CSV file). If not provided, image will be saved in the same directory as input file")
+    parser.add_argument("--dab-shift", type=int, help="DAB threshold shift")
+    parser.add_argument("--hem-shift", type=int, help="HEM threshold shift")
+    parser.add_argument("--mp-disable", dest='mp', action='store_false', help="Disable multiprocessing")
     main(parser.parse_args())
