@@ -7,14 +7,19 @@ Created on 2014-06-07
 @author: Eugene Dvoretsky
 """
 
+import os
 import sys
 import time
 from scipy import misc
 from PySide import QtGui
+
+curdir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, curdir + '/../immunopy')
+
 from ipui import GLFrame
 
 
-img = misc.imread('image/hdab256.tif')
+img = misc.imread('../immunopy/image/hdab256.tif')
 
 cycles = 100.0
 counter = 0

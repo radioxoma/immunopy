@@ -7,7 +7,13 @@ Created on 2014-01-18
 @author: Eugene Dvoretsky
 """
 
+import os
+import sys
 import unittest
+
+curdir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, curdir + '/../immunopy')
+
 from iptools import CalibMicro
 
 

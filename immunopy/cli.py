@@ -66,7 +66,7 @@ def main(args):
             [CProcessor.st_dab_cell_count,
              CProcessor.st_hem_cell_count,
              CProcessor.st_dabdabhem_fraction,
-             compliance])
+             int(compliance)])
         print(result_list[-1])
 #         if num > 1:
 #             break
