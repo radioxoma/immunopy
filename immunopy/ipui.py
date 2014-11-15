@@ -256,17 +256,17 @@ class AnalysisControl(QtGui.QGroupBox):
         self.peak_dist.setValue(self.parent.VProc.CProcessor.peak_distance)
         self.form.addRow('Peak distance', self.peak_dist)
         
-        self.shift_th = QtGui.QSpinBox()
-        self.shift_th.setSuffix(' %')
-        self.shift_th.setRange(-100, 100)
-        self.shift_th.setValue(self.parent.VProc.CProcessor.threshold_shift)
-        self.form.addRow('Shift threshold', self.shift_th)
-
-#     def toggle(self):
-#         if self.cont_cbx.checkState() == QtCore.Qt.Checked:
-#             pass
-#         else:
-#             pass
+        self.dab_th_shift = QtGui.QSpinBox()
+        self.dab_th_shift.setSuffix(' %')
+        self.dab_th_shift.setRange(-100, 100)
+        self.dab_th_shift.setValue(self.parent.VProc.CProcessor.th_dab_shift)
+        self.form.addRow('DAB threshold shift', self.dab_th_shift)
+        
+        self.hem_th_shift = QtGui.QSpinBox()
+        self.hem_th_shift.setSuffix(' %')
+        self.hem_th_shift.setRange(-100, 100)
+        self.hem_th_shift.setValue(self.parent.VProc.CProcessor.th_hem_shift)
+        self.form.addRow('HEM threshold shift', self.hem_th_shift)
 
 
 class GLFrame(QtOpenGL.QGLWidget):
@@ -450,8 +450,12 @@ class VideoProcessor(QtCore.QObject):
         self.CProcessor.scale = value
     
     @QtCore.Slot()
-    def setThresholdShift(self, value):
-        self.CProcessor.threshold_shift = value
+    def setDabThresholdShift(self, value):
+        self.CProcessor.th_dab_shift = value
+
+    @QtCore.Slot()
+    def setHemThresholdShift(self, value):
+        self.CProcessor.th_hem_shift = value
 
     @QtCore.Slot()
     def setMinSize(self, value):

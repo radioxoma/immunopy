@@ -161,7 +161,8 @@ class CellProcessor(object):
     def __init__(self, scale, colormap, mp=False):
         super(CellProcessor, self).__init__()
         self.white_balance_shift = [0, 0, 0]  # RGB colors shift
-        self.threshold_shift = 20
+        self.th_dab_shift = 20
+        self.th_hem_shift = 20
         self.min_size = 80
         self.max_size = 3000
         self.vtype = 1
@@ -214,11 +215,18 @@ class CellProcessor(object):
         self.__white_balance_shift = value
 
     @property
-    def threshold_shift(self):
-        return self.__threshold_shift
-    @threshold_shift.setter
-    def threshold_shift(self, value):
-        self.__threshold_shift = value
+    def th_dab_shift(self):
+        return self.__threshold_dab_shift
+    @th_dab_shift.setter
+    def th_dab_shift(self, value):
+        self.__threshold_dab_shift = value
+
+    @property
+    def th_hem_shift(self):
+        return self.__threshold_hem_shift
+    @th_hem_shift.setter
+    def th_hem_shift(self, value):
+        self.__threshold_hem_shift = value
 
     @property
     def min_size(self):
@@ -266,13 +274,13 @@ class CellProcessor(object):
 
         # MULTICORE -----------------------------------------------------------
         if self.pool:
-            dproc = self.pool.apply_async(worker, (dab, self.threshold_shift, self.peak_distance, self.min_size, self.max_size))
-            hproc = self.pool.apply_async(worker, (hem, self.threshold_shift, self.peak_distance, self.min_size, self.max_size))
+            dproc = self.pool.apply_async(worker, (dab, self.__threshold_dab_shift, self.peak_distance, self.min_size, self.max_size))
+            hproc = self.pool.apply_async(worker, (hem, self.__threshold_hem_shift, self.peak_distance, self.min_size, self.max_size))
             dabfiltered, self.st_dab_cell_count = dproc.get(timeout=10)
             hemfiltered, self.st_hem_cell_count = hproc.get(timeout=10)
         else:
-            dabfiltered, self.st_dab_cell_count = worker(dab, self.threshold_shift, self.peak_distance, self.min_size, self.max_size)
-            hemfiltered, self.st_hem_cell_count = worker(hem, self.threshold_shift, self.peak_distance, self.min_size, self.max_size)
+            dabfiltered, self.st_dab_cell_count = worker(dab, self.__threshold_dab_shift, self.peak_distance, self.min_size, self.max_size)
+            hemfiltered, self.st_hem_cell_count = worker(hem, self.__threshold_hem_shift, self.peak_distance, self.min_size, self.max_size)
         # MULTICORE END -------------------------------------------------------
 
         # Stats

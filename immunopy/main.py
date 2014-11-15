@@ -76,7 +76,8 @@ class MainWindow(QtGui.QMainWindow):
         self.AControl.sizemax.valueChanged.connect(self.VProc.setMaxSize)
         self.AControl.sizemin.valueChanged.connect(self.VProc.setMinSize)
         self.AControl.peak_dist.valueChanged.connect(self.VProc.setPeakDistance)
-        self.AControl.shift_th.valueChanged.connect(self.VProc.setThresholdShift)
+        self.AControl.dab_th_shift.valueChanged.connect(self.VProc.setDabThresholdShift)
+        self.AControl.hem_th_shift.valueChanged.connect(self.VProc.setHemThresholdShift)
         
         self.statBrowser.wantAssay.connect(self.VProc.pushAssay)
         self.VProc.modelGotAssay.connect(self.statBrowser.ready)
