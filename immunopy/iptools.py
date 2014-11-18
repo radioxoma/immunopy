@@ -411,6 +411,8 @@ def rescale(source, scale):
     
     scale in um/px
     """
+    if scale == 0.5:
+        return source
     scl_factor = scale / 0.5  # Target scale - 0.5 um/px (2 px/um)
     if scl_factor > 1:
         print('WARNING: upscale')

@@ -31,15 +31,14 @@ def main(args):
         header = reader.next()
         col_idx = dict(itertools.izip(header, xrange(len(header))))
         # Now we can get a column index by name: `col_idx['Age']`
-        # 'Antibody', 'Filename', 'Patient ID', 'Age', 'Staining', 'Intensity', 'Location', 'Quantity'
         assay_list = [row for row in reader]
 
     CMicro = iptools.CalibMicro(scale=args.scale)  # px/um
     CProcessor = iptools.CellProcessor(
         scale=CMicro.scale, colormap=lut.random_jet(), mp=args.mp)    
-    if args.dab_shift:
+    if args.dab_shift is not None:
         CProcessor.th_dab_shift = args.dab_shift
-    if args.hem_shift:
+    if args.hem_shift is not None:
         CProcessor.th_hem_shift = args.hem_shift
     total_num = float(len(assay_list))
     result_list = list()
@@ -47,9 +46,10 @@ def main(args):
         ab_name = row[col_idx['Antibody']]
         image_name = row[col_idx['Filename']]
         img_path = os.path.join(csv_dir, protein_name, ab_name, image_name)
-        print("\n[{}/{:2.0f} - {:3.0f} %] '{}/{}'").format(num, total_num, num / total_num * 100, ab_name, image_name)
-        rgb = misc.imread(img_path)
-        CProcessor.process(rgb)
+        print("[{}/{:2.0f} - {:3.0f} %] '{}/{}'").format(num, total_num, num / total_num * 100, ab_name, image_name)
+        if not args.dry_run:
+            rgb = misc.imread(img_path)
+            CProcessor.process(rgb)
         CProcessor.st_dabdabhem_fraction
 
         if row[col_idx['Quantity']] == 'gt75%':
@@ -70,22 +70,28 @@ def main(args):
              CProcessor.st_hem_cell_count,
              CProcessor.st_dabdabhem_fraction,
              int(compliance)])
-        print(result_list[-1])
-#         if num > 1:
+        if not args.quiet:
+            print(result_list[-1])
+#         if num > 1:  # Break run for testing
 #             break
 
     if args.out:
         out_csv_filename = os.path.join(os.getcwdu(), args.out)
     else:
         out_csv_filename = os.path.join(csv_dir, protein_name + '_ip.csv')
-    with open(out_csv_filename, mode='wb') as f:
-        writer = csv.writer(f, dialect=csv.excel, delimiter=';')
-        header.extend(["DAB cell count", "HEM cell count", "DAB / DAB|HEM, %", "Compliance"])
-        writer.writerow(header)
-        for num, result in enumerate(result_list):
-            assay_list[num].extend(result)
-        writer.writerows(assay_list)
-        print("\nFiles were written to '%s'") % out_csv_filename
+
+    if args.dry_run:
+        print("Will be writing to %s") % out_csv_filename
+    else:
+        with open(out_csv_filename, mode='wb') as f:
+            writer = csv.writer(f, dialect=csv.excel, delimiter=';')
+            header.extend(["DAB cell count", "HEM cell count", "DAB / DAB|HEM, %", "Compliance"])
+            writer.writerow(header)
+            for num, result in enumerate(result_list):
+                assay_list[num].extend(result)
+            writer.writerows(assay_list)
+            if not args.quiet:
+                print("\nFiles were written to '%s'") % out_csv_filename
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__description__)
@@ -95,4 +101,6 @@ if __name__ == "__main__":
     parser.add_argument("--dab-shift", type=int, help="DAB threshold shift")
     parser.add_argument("--hem-shift", type=int, help="HEM threshold shift")
     parser.add_argument("--mp-disable", dest='mp', action='store_false', help="Disable multiprocessing")
+    parser.add_argument("--quiet", action='store_true', help="Do not say anything")
+    parser.add_argument("--dry-run", action='store_true', help="Do not write anything")
     main(parser.parse_args())
