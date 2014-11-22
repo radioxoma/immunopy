@@ -423,7 +423,7 @@ def rescale(source, scale):
     return cv2.resize(source, dsize=(fx, fy), interpolation=cv2.INTER_LINEAR)
 
 
-def threshold_isodata(image, nbins=256, shift=None):
+def threshold_isodata(image, nbins=256, shift=None, max_limit=None, min_limit=None):
     """Return threshold value based on ISODATA method.
 
     Histogram-based threshold, known as Ridler-Calvard method or intermeans.
@@ -436,13 +436,20 @@ def threshold_isodata(image, nbins=256, shift=None):
         Number of bins used to calculate histogram. This value is ignored for
         integer arrays.
     shift : int, optional
-        Shift threshold value by percent up/down.
+        Shift threshold value by percent up (positive) or down (negative).
+    max_limit : int, optional
+        Percent 0-100. If calculated threshold higher then max_limit,
+        return corresponding to max_limit threshold value.
+    min_limit : int, optional
+        Percent 0-100. If calculated threshold lower then min_limit,
+        return corresponding to min_limit threshold value.
 
     Returns
     -------
     threshold : float or int, corresponding input array dtype.
         Upper threshold value. All pixels intensities that less or equal of
         this value assumed as background.
+        `foreground (cells) > threshold >= background`.
 
     References
     ----------
@@ -464,6 +471,9 @@ def threshold_isodata(image, nbins=256, shift=None):
     >>> thresh = threshold_isodata(image)
     >>> binary = image > thresh
     """
+    if max_limit is not None and min_limit is not None:
+        if min_limit > max_limit:
+            raise ValueError('min_limit greater then max_limit')
     hist, bin_centers = histogram(image, nbins)
     # On blank images (e.g. filled with 0) with int dtype, `histogram()`
     # returns `bin_centers` containing only one value. Speed up with it.
@@ -485,11 +495,20 @@ def threshold_isodata(image, nbins=256, shift=None):
 
     allmean = (l + h) / 2.0
     threshold = bin_centers[np.nonzero(allmean.round() == binnums)[0][0]]
-    # This implementation returns threshold where
-    # `background <= threshold < foreground`.
-
+    
+    ptp = (bin_centers[-1] - bin_centers[0]) / 100.  # Peek to peek range
     if shift:
-        threshold += (bin_centers[-1] - bin_centers[0]) * shift / 100.
+        threshold += ptp * shift 
+    if max_limit is not None:
+        # Limit foreground
+        lim = bin_centers[0] + ptp * max_limit
+        if threshold > lim:
+            threshold = lim
+    if min_limit is not None:
+        # Limit background
+        lim = bin_centers[0] + ptp * min_limit
+        if threshold < lim:
+            threshold = lim
     return threshold
 
 
@@ -610,12 +629,6 @@ def montage(tl, tr, bl, br):
     blank[h:, w:] = br
     return blank
 
-################################################################################
-# class AnalyticsTools(object):
-#     """Plots."""
-#     def __init__(self):
-#         super(AnalyticsTools, self).__init__()
-
 
 def areaFraction(hemlabels, dablabels):
     """Return simple area fraction.
@@ -656,7 +669,8 @@ def fitPolynominal(percent):
 
 
 def autofocus():
-    """help find focus position
-    В оригинале статьи про watershed была функция для проверки фокусировки.
+    """Help find focus position.
+    
+    There is an autofocusing algorytm in original watershed article.
     """
     pass
