@@ -9,6 +9,7 @@ Created on 2014-01-16
 Immunopy image processing core.
 """
 
+import warnings
 from multiprocessing import Pool
 import numpy as np
 from scipy import ndimage
@@ -415,7 +416,7 @@ def rescale(source, scale):
         return source
     scl_factor = scale / 0.5  # Target scale - 0.5 um/px (2 px/um)
     if scl_factor > 1:
-        print('WARNING: upscale')
+        warnings.warn("Input image resolution worse than 0.5 um/px. Upscaling will be used.", UserWarning)
     fy = int(round(source.shape[0] * scl_factor))
     fx = int(round(source.shape[1] * scl_factor))
     # cv2.INTER_CUBIC
