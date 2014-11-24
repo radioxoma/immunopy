@@ -21,7 +21,7 @@ from ipui import GLFrame
 
 img = misc.imread('../immunopy/image/hdab256.tif')
 
-cycles = 100.0
+cycles = 100
 counter = 0
 start_time = time.time()
 
@@ -29,15 +29,16 @@ start_time = time.time()
 class MainWindow(QtGui.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
+        self.resize(300, 300)
         self.widget = GLFrame()
         self.widget.setData(img)
         self.setCentralWidget(self.widget)
 
-        # global counter
-        # while counter < cycles:
-        #     counter += 1
-        #     self.widget.setData(img)
-        # print('FPS: %f') % (cycles / (time.time() - start_time))
+#         global counter
+#         while counter < cycles:
+#             counter += 1
+#             self.widget.setData(img)
+#         print('FPS: %f') % (cycles / (time.time() - start_time))
 
 
 if __name__ == '__main__':

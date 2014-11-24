@@ -312,11 +312,17 @@ class GLFrame(QtOpenGL.QGLWidget):
         if self._tex_data is not None:
             if self._tex_data.shape == array.shape:
                 self._tex_data = array
-                # Prevent segfault: glTexSubImage would not accept None.
-                glTexSubImage2D(
-                    GL_TEXTURE_2D, 0, 0, 0,
-                    self._tex_data.shape[1], self._tex_data.shape[0],
-                    GL_RGB, GL_UNSIGNED_BYTE, self._tex_data)
+                if len(self._tex_data.shape) == 3:
+                    # Prevent segfault: glTexSubImage would not accept None.
+                    glTexSubImage2D(
+                        GL_TEXTURE_2D, 0, 0, 0,
+                        self._tex_data.shape[1], self._tex_data.shape[0],
+                        GL_RGB, GL_UNSIGNED_BYTE, self._tex_data)
+                elif len(self._tex_data.shape) == 2:
+                    glTexSubImage2D(
+                        GL_TEXTURE_2D, 0, 0, 0,
+                        self._tex_data.shape[1], self._tex_data.shape[0],
+                        GL_LUMINANCE, GL_UNSIGNED_BYTE, self._tex_data)
             else:
                 self.deleteTexture(self._texture_id)
                 self.createTex(array)
@@ -331,7 +337,7 @@ class GLFrame(QtOpenGL.QGLWidget):
         self.updateGL()
 
     def createTex(self, array):
-        """Create texture object for given RGB array.
+        """Create texture object for given RGB or grayscale uint8 array.
         """
         self.makeCurrent()
         self._tex_data = array
@@ -345,11 +351,18 @@ class GLFrame(QtOpenGL.QGLWidget):
         # Linear filtering (?)
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-
-        glTexImage2D(
-            GL_TEXTURE_2D, 0, GL_RGB,
-            self._tex_data.shape[1], self._tex_data.shape[0],
-            0, GL_RGB, GL_UNSIGNED_BYTE, self._tex_data)
+        if len(self._tex_data.shape) == 3:
+            # Color RGB texture
+            glTexImage2D(
+                GL_TEXTURE_2D, 0, GL_RGB,
+                self._tex_data.shape[1], self._tex_data.shape[0],
+                0, GL_RGB, GL_UNSIGNED_BYTE, self._tex_data)
+        elif len(self._tex_data.shape) == 2:
+            # Grayscale texture
+            glTexImage2D(
+                GL_TEXTURE_2D, 0, GL_LUMINANCE,
+                self._tex_data.shape[1], self._tex_data.shape[0],
+                0, GL_LUMINANCE, GL_UNSIGNED_BYTE, self._tex_data)
 
 
 class VideoProcessor(QtCore.QObject):
