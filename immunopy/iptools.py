@@ -31,7 +31,7 @@ class CalibMicro(QtCore.QObject):
     TODO:
         * Use binning
     """
-    
+
     scale_changed = QtCore.Signal(float)
 
     def __init__(self, objective=None, scale=None):
@@ -82,7 +82,7 @@ class CalibMicro(QtCore.QObject):
         self.__curr_scale = self.__scales[value]
         self.__curr_scale_name = value
         self.scale_changed.emit(self.__curr_scale)
-            
+
     def um2px(self, um=1):
         """Convert um to pixel line by current scale"""
         return um / self.__curr_scale
@@ -176,11 +176,11 @@ class CellProcessor(object):
             self.pool = Pool(processes=2)
         else:
             self.pool = None
-            
+
         self.st_dab_cell_count = 0
         self.st_hem_cell_count = 0
         self.st_dabdabhem_fraction = 0.0
-        
+
     def take_assay(self):
         """Return assay object for processed image.
         """
@@ -255,7 +255,7 @@ class CellProcessor(object):
 
     def process(self, image):
         """Segmentation and statistical calculation.
-        """        
+        """
         # Light source correction
         # correct_wb(image, self.__white_balance_shift)
         if self.vtype == 0:
@@ -265,7 +265,7 @@ class CellProcessor(object):
         # Enhancement
         meaned = cv2.blur(rgb, (self.blur, self.blur))
 
-        # Resize to fixed scale 
+        # Resize to fixed scale
         scaled = rescale(meaned, self.__scale)
 
         # Unmix stains
@@ -288,7 +288,7 @@ class CellProcessor(object):
         # self.stCellFraction =  float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100
         # self.stDabHemFraction = areaFraction(hemfiltered, dabfiltered) * 100
         self.st_dabdabhem_fraction = areaDisjFraction(hemfiltered, dabfiltered) * 100
-        
+
         # Visualization
         if self.vtype == 1:
             overlay = drawOverlay(scaled, dabfiltered, hemfiltered)
@@ -409,7 +409,7 @@ def normalize(img):
 
 def rescale(source, scale):
     """If scale > 2 px/um, image will be downsampled.
-    
+
     scale in um/px
     """
     if scale == 0.5:
@@ -495,10 +495,10 @@ def threshold_isodata(image, nbins=256, shift=None, max_limit=None, min_limit=No
 
     allmean = (l + h) / 2.0
     threshold = bin_centers[np.nonzero(allmean.round() == binnums)[0][0]]
-    
+
     ptp = (bin_centers[-1] - bin_centers[0]) / 100.  # Peek to peek range
     if shift:
-        threshold += ptp * shift 
+        threshold += ptp * shift
     if max_limit is not None:
         # Limit foreground
         lim = bin_centers[0] + ptp * max_limit
@@ -509,6 +509,67 @@ def threshold_isodata(image, nbins=256, shift=None, max_limit=None, min_limit=No
         lim = bin_centers[0] + ptp * min_limit
         if threshold < lim:
             threshold = lim
+    return threshold
+
+
+def threshold_yen(image, nbins=256, shift=None):
+    """Return threshold value based on Yen's method.
+
+    Parameters
+    ----------
+    image : array
+        Input image.
+    nbins : int, optional
+        Number of bins used to calculate histogram. This value is ignored for
+        integer arrays.
+    shift : int, optional
+        Shift threshold value by percent up (positive) or down (negative).
+
+    Returns
+    -------
+    threshold : float
+        Upper threshold value. All pixels intensities that less or equal of
+        this value assumed as foreground.
+
+    References
+    ----------
+    .. [1] Yen J.C., Chang F.J., and Chang S. (1995) "A New Criterion
+           for Automatic Multilevel Thresholding" IEEE Trans. on Image
+           Processing, 4(3): 370-378
+    .. [2] Sezgin M. and Sankur B. (2004) "Survey over Image Thresholding
+           Techniques and Quantitative Performance Evaluation" Journal of
+           Electronic Imaging, 13(1): 146-165,
+           http://www.busim.ee.boun.edu.tr/~sankur/SankurFolder/Threshold_survey.pdf
+    .. [3] ImageJ AutoThresholder code, http://fiji.sc/wiki/index.php/Auto_Threshold
+
+    Examples
+    --------
+    >>> from skimage.data import camera
+    >>> image = camera()
+    >>> thresh = threshold_yen(image)
+    >>> binary = image <= thresh
+    """
+    hist, bin_centers = histogram(image, nbins)
+    # On blank images (e.g. filled with 0) with int dtype, `histogram()`
+    # returns `bin_centers` containing only one value. Speed up with it.
+    if bin_centers.size == 1:
+        return bin_centers[0]
+
+    # Calculate probability mass function
+    pmf = hist.astype(np.float32) / hist.sum()
+    P1 = np.cumsum(pmf)  # Cumulative normalized histogram
+    P1_sq = np.cumsum(pmf ** 2)
+    # Get cumsum calculated from end of squared array:
+    P2_sq = np.cumsum(pmf[::-1] ** 2)[::-1]
+    # P2_sq indexes is shifted +1. I assume, with P1[:-1] it's help avoid '-inf'
+    # in crit. ImageJ Yen implementation replaces those values by zero.
+    crit = np.log(((P1_sq[:-1] * P2_sq[1:]) ** -1) *
+                  (P1[:-1] * (1.0 - P1[:-1])) ** 2)
+
+    threshold = bin_centers[crit.argmax()]
+    if shift:
+        ptp = (bin_centers[-1] - bin_centers[0]) / 100.  # Peek to peek range
+        threshold += ptp * shift
     return threshold
 
 
@@ -670,7 +731,7 @@ def fitPolynominal(percent):
 
 def autofocus():
     """Help find focus position.
-    
+
     There is an autofocusing algorytm in original watershed article.
     """
     pass

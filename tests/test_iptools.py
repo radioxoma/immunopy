@@ -15,12 +15,12 @@ curdir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, curdir + '/../immunopy')
 
 from scipy import misc
-from skimage import filters, color
+from skimage import color
+from skimage import filter as filters
 import iptools
 
 
 class Test(unittest.TestCase):
-
     def testInstance(self):
         CMicro = iptools.CalibMicro(objective='20')
         self.assertTrue(0.22 < CMicro.scale < 0.23)
@@ -42,7 +42,7 @@ class Test(unittest.TestCase):
 
 class TestThresholdIsodata(unittest.TestCase):
     def setUp(self):
-        self.rgb = misc.imread("../immunopy/image/hdab256.tif")
+        self.rgb = misc.imread("./immunopy/image/hdab256.tif")
         self.hdx = color.separate_stains(self.rgb, color.hdx_from_rgb)
         self.hem = self.hdx[:,:,0]
         self.dab = self.hdx[:,:,1]
@@ -84,6 +84,50 @@ class TestThresholdIsodata(unittest.TestCase):
     def testMaxMinSwapException(self):
         with self.assertRaises(ValueError):
             iptools.threshold_isodata(image=self.rgb, min_limit=1, max_limit=0)
+
+
+class TestThresholdYen(unittest.TestCase):
+    def setUp(self):
+        self.rgb = misc.imread("./immunopy/image/hdab256.tif")
+        self.hdx = color.separate_stains(self.rgb, color.hdx_from_rgb)
+        self.hem = self.hdx[:,:,0]
+        self.dab = self.hdx[:,:,1]
+
+    def testThresholdYen0(self):
+        t = iptools.threshold_yen(image=self.rgb[...,0])
+        self.assertEqual(t, 133)  # Red old
+        # 129 threshold from new Fiji vesion
+
+    def testThresholdYen1(self):
+        t = iptools.threshold_yen(image=self.rgb[...,1])
+        self.assertEqual(t, 104)  # Green old
+        # 106
+
+    def testThresholdYen2(self):
+        t = iptools.threshold_yen(image=self.rgb[...,2])
+        self.assertEqual(t, 114)  # Blue old
+        # 109
+
+    def testCompareSkimageAndIPThresholdYenValue(self):
+        t1 = iptools.threshold_yen(image=self.rgb[...,0])
+        t2 = filters.threshold_yen(image=self.rgb[...,0])
+        self.assertEqual(t1, t2, msg='Different Yen algorithm')
+
+    def testThresholdShift20(self):
+        t = iptools.threshold_yen(image=self.rgb[...,0], shift=20)
+        self.assertAlmostEqual(t, 182.4)
+
+    def testThresholdShift_13(self):
+        t = iptools.threshold_yen(image=self.rgb[...,2], shift=-13)
+        self.assertAlmostEqual(t, 85.79)
+
+    def testThresholdShiftOnFloat(self):
+        t = iptools.threshold_yen(image=self.dab)
+        self.assertAlmostEqual(t, -0.749401, places=5)
+
+    def testThresholdShiftOnFloat5(self):
+        t = iptools.threshold_yen(image=self.dab, shift=5)
+        self.assertAlmostEqual(t, -0.7209012, places=5)
 
 
 if __name__ == "__main__":
