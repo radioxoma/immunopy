@@ -197,7 +197,8 @@ class CellProcessor(object):
     def scale(self, value):
         assert(isinstance(value, float))
         self.__scale = value
-        print('Scale changed to %s um/px') % self.__scale
+        print('Scale changed to %f um/px (%f px/um)') % (
+            self.__scale, 1.0 / self.__scale)
 
     @property
     def vtype(self):
