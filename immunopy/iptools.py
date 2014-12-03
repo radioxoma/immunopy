@@ -15,8 +15,9 @@ import numpy as np
 from scipy import ndimage
 from skimage.exposure import histogram
 from skimage.morphology import watershed
-from skimage.color import separate_stains, hdx_from_rgb
+from skimage import color
 from skimage.feature import peak_local_max
+from skimage.util import dtype
 import cv2
 from PySide import QtCore
 import lut
@@ -271,7 +272,7 @@ class CellProcessor(object):
         scaled = rescale(meaned, self.__scale)
 
         # Unmix stains
-        hdx = separate_stains(scaled, hdx_from_rgb)
+        hdx = color_deconvolution(scaled, color.hdx_from_rgb)
         hem = hdx[:,:,0]
         dab = hdx[:,:,1]
 
@@ -320,7 +321,7 @@ def worker(stain, threshold_shift, peak_distance, min_size, max_size):
     Would not work with processes as class method.
     """
     stth = threshold_isodata(stain, shift=threshold_shift)
-    stmask = stain > stth
+    stmask = stain < stth
     stmed = ndimage.filters.median_filter(stmask, size=2)
     stedt = cv2.distanceTransform(
         stmed.view(np.uint8), distanceType=cv2.cv.CV_DIST_L2, maskSize=3)
@@ -423,6 +424,19 @@ def rescale(source, scale):
     fx = int(round(source.shape[1] * scl_factor))
     # cv2.INTER_CUBIC
     return cv2.resize(source, dsize=(fx, fy), interpolation=cv2.INTER_LINEAR)
+
+
+def color_deconvolution(rgb, conv_matrix):
+    """Unmix stains for histogram analysis.
+    :return: Image values in normal space (not optical density i.e. log space)
+             and in range 0...1.
+    :rtype: float array
+    """
+    rgb = dtype.img_as_float(rgb, force_copy=True)
+    rgb += 1
+    stains = np.dot(np.reshape(-np.log10(rgb), (-1, 3)), conv_matrix)
+    stains = np.exp(-stains)
+    return np.reshape(stains, rgb.shape)
 
 
 def threshold_isodata(image, nbins=256, shift=None, max_limit=None, min_limit=None):
