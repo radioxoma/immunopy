@@ -266,8 +266,7 @@ class CellProcessor(object):
         rgb = image.copy()
 
         # Enhancement (can abuse threshold output)
-#         meaned = cv2.blur(rgb, (self.blur, self.blur))
-        meaned = rgb
+        meaned = cv2.blur(rgb, (self.blur, self.blur))
 
         # Resize to fixed scale
         scaled = rescale(meaned, self.__scale)
@@ -516,6 +515,7 @@ def threshold_isodata(image, nbins=256, shift=None, max_limit=None, min_limit=No
     ptp = (bin_centers[-1] - bin_centers[0]) / 100.  # Peek to peek range
     if shift:
         threshold += ptp * shift
+    print("Threshold value shift", (threshold - bin_centers[0]) / float(ptp))
     if max_limit is not None:
         # Limit foreground
         lim = bin_centers[0] + ptp * max_limit
@@ -584,9 +584,10 @@ def threshold_yen(image, nbins=256, shift=None):
                   (P1[:-1] * (1.0 - P1[:-1])) ** 2)
 
     threshold = bin_centers[crit.argmax()]
+    ptp = (bin_centers[-1] - bin_centers[0]) / 100.  # Peek to peek range
     if shift:
-        ptp = (bin_centers[-1] - bin_centers[0]) / 100.  # Peek to peek range
         threshold += ptp * shift
+    print("Threshold value shift", (threshold - bin_centers[0]) / float(ptp))
     return threshold
 
 
