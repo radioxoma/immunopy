@@ -30,6 +30,7 @@ class MainWindow(QtGui.QMainWindow):
         self.mmc.enableDebugLog(MM_DEBUG)
         self.mmc.loadSystemConfiguration(MM_CONFIGURATION_NAME)
         self.mmc.setCircularBufferMemoryFootprint(MM_CIRCULAR_BUFFER)
+        # iptools.setMmcResolution(self.mmc, 1024, 640)
         self.MPModel = mmanager.MicromanagerPropertyModel(
             self.mmc, deviceLabel=self.mmc.getCameraDevice())
         self.MPBrowser = mmanager.MicromanagerPropertyBrowser(self.MPModel)
@@ -146,6 +147,7 @@ if __name__ == '__main__':
     module_dir = os.path.dirname(__file__)
     if FAKE_CAMERA:
         import MMCorePyFake as MMCorePy
+        import iptools
         MM_CONFIGURATION_NAME = os.path.join(module_dir, "camera_demo.cfg")
     else:
         import MMCorePy

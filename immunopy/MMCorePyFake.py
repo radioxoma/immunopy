@@ -25,6 +25,10 @@ try:
             self.BGRA = np.dstack((self.BGR, np.zeros((self.BGR.shape[0], self.BGR.shape[1]), dtype=np.uint8)))
             self.RGB32 = self.BGRA.view(dtype=np.uint32)
             self.frame = self.RGB32
+        def getImageWidth(self):
+            return self.frame.shape[1]
+        def getImageHeight(self):
+            return self.frame.shape[0]
         def setROI(self, x, y, w, h):
             print("setROI: %d %d %d %d") % (x, y, w, h)
             if self.RGB32.shape[0] < (y + h) or self.RGB32.shape[1] < (x + w):
@@ -39,6 +43,7 @@ try:
             return self.frame.copy()
         def popNextImage(self):
             return self.frame.copy()
+
 except ImportError:
     class CMMCore(object):
         """Fake Micro-manager RGB32 camera.
