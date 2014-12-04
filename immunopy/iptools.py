@@ -164,10 +164,10 @@ class CellProcessor(object):
     def __init__(self, scale, colormap, mp=False):
         super(CellProcessor, self).__init__()
         self.white_balance_shift = [0, 0, 0]  # RGB colors shift
-        self.th_dab_shift = 20
-        self.th_hem_shift = 20
+        self.th_dab_shift = 0
+        self.th_hem_shift = 0
         self.min_size = 80
-        self.max_size = 3000
+        self.max_size = 9999999 # 3000 temporary disabled
         self.vtype = 1
 
         self.peak_distance = 8
@@ -265,8 +265,9 @@ class CellProcessor(object):
             return image
         rgb = image.copy()
 
-        # Enhancement
-        meaned = cv2.blur(rgb, (self.blur, self.blur))
+        # Enhancement (can abuse threshold output)
+#         meaned = cv2.blur(rgb, (self.blur, self.blur))
+        meaned = rgb
 
         # Resize to fixed scale
         scaled = rescale(meaned, self.__scale)
@@ -320,7 +321,7 @@ def worker(stain, threshold_shift, peak_distance, min_size, max_size):
     Return filtered objects and their count.
     Would not work with processes as class method.
     """
-    stth = threshold_isodata(stain, shift=threshold_shift)
+    stth = threshold_yen(stain, shift=threshold_shift)
     stmask = stain < stth
     stmed = ndimage.filters.median_filter(stmask, size=2)
     stedt = cv2.distanceTransform(

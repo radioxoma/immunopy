@@ -240,7 +240,7 @@ class AnalysisControl(QtGui.QGroupBox):
         
         self.sizemax = QtGui.QSpinBox()
         self.sizemax.setSuffix(' px')
-        self.sizemax.setRange(0, 99999)
+        self.sizemax.setRange(0, 9999999)
         self.sizemax.setValue(self.parent.VProc.CProcessor.max_size)
         self.form.addRow('Max size', self.sizemax)
         
