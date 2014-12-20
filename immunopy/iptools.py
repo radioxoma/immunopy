@@ -15,13 +15,12 @@ import numpy as np
 from scipy import ndimage
 from skimage.exposure import histogram
 from skimage.morphology import watershed
-from skimage import color
 from skimage.feature import peak_local_max
-from skimage.util import dtype
 import cv2
 from PySide import QtCore
 import lut
 import statdata
+import cdeconv
 
 
 class CalibMicro(QtCore.QObject):
@@ -272,7 +271,7 @@ class CellProcessor(object):
         scaled = rescale(meaned, self.__scale)
 
         # Unmix stains
-        hdx = color_deconvolution(scaled, color.hdx_from_rgb)
+        hdx = cdeconv.color_deconvolution(scaled, cdeconv.hpa_hdx_from_rgb)
         hem = hdx[:,:,0]
         dab = hdx[:,:,1]
 
@@ -320,7 +319,7 @@ def worker(stain, threshold_shift, peak_distance, min_size, max_size):
     Return filtered objects and their count.
     Would not work with processes as class method.
     """
-    stth = threshold_yen(stain, shift=threshold_shift)
+    stth = threshold_isodata(stain, shift=threshold_shift)
     stmask = stain < stth
     stmed = ndimage.filters.median_filter(stmask, size=2)
     stedt = cv2.distanceTransform(
@@ -426,19 +425,6 @@ def rescale(source, scale):
     return cv2.resize(source, dsize=(fx, fy), interpolation=cv2.INTER_LINEAR)
 
 
-def color_deconvolution(rgb, conv_matrix):
-    """Unmix stains for histogram analysis.
-    :return: Image values in normal space (not optical density i.e. log space)
-             and in range 0...1.
-    :rtype: float array
-    """
-    rgb = dtype.img_as_float(rgb, force_copy=True)
-    rgb += 1
-    stains = np.dot(np.reshape(-np.log10(rgb), (-1, 3)), conv_matrix)
-    stains = np.exp(-stains)
-    return np.reshape(stains, rgb.shape)
-
-
 def threshold_isodata(image, nbins=256, shift=None, max_limit=None, min_limit=None):
     """Return threshold value based on ISODATA method.
 
@@ -515,7 +501,7 @@ def threshold_isodata(image, nbins=256, shift=None, max_limit=None, min_limit=No
     ptp = (bin_centers[-1] - bin_centers[0]) / 100.  # Peek to peek range
     if shift:
         threshold += ptp * shift
-    print("Threshold value shift", (threshold - bin_centers[0]) / float(ptp))
+    # print("Threshold value shift", (threshold - bin_centers[0]) / float(ptp))
     if max_limit is not None:
         # Limit foreground
         lim = bin_centers[0] + ptp * max_limit
@@ -587,7 +573,7 @@ def threshold_yen(image, nbins=256, shift=None):
     ptp = (bin_centers[-1] - bin_centers[0]) / 100.  # Peek to peek range
     if shift:
         threshold += ptp * shift
-    print("Threshold value shift", (threshold - bin_centers[0]) / float(ptp))
+    # print("Threshold value shift", (threshold - bin_centers[0]) / float(ptp))
     return threshold
 
 
