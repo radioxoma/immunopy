@@ -21,7 +21,11 @@ import cv2
 from PySide import QtCore
 import lut
 import statdata
-import cdeconv
+try:
+    from stain import cdeconvcl
+    cdeconv = cdeconvcl.ColorDeconvolution()
+except ImportError:
+    from stain import cdeconv
 
 
 class CalibMicro(QtCore.QObject):
