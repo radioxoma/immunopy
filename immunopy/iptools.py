@@ -16,6 +16,7 @@ from scipy import ndimage
 from skimage.exposure import histogram
 from skimage.morphology import watershed
 from skimage.feature import peak_local_max
+from skimage import color
 import cv2
 from PySide import QtCore
 import lut
@@ -271,7 +272,8 @@ class CellProcessor(object):
         scaled = rescale(meaned, self.__scale)
 
         # Unmix stains
-        hdx = cdeconv.color_deconvolution(scaled, cdeconv.hpa_hdx_from_rgb)
+        hdx = cdeconv.color_deconvolution(scaled, color.hdx_from_rgb)
+#         hdx = cdeconv.color_deconvolution(scaled, cdeconv.hpa_hdx_from_rgb)
         hem = hdx[:,:,0]
         dab = hdx[:,:,1]
 
