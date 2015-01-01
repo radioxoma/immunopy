@@ -26,7 +26,7 @@ ERROR_ON_COPY = True  # Raise exception on array copy or casting
 
 class AdjustBar(QtGui.QWidget):
     """Slider and spinbox widget.
-    
+
     The spinboxes always contain real property value.
     BUG: precision sometimes is not enough.
     """
@@ -39,7 +39,7 @@ class AdjustBar(QtGui.QWidget):
         self.camname = self.mmc.getCameraDevice()
         self.minlim=self.mmc.getPropertyLowerLimit(self.camname, prop)
         self.maxlim=self.mmc.getPropertyUpperLimit(self.camname, prop)
-        
+
         self.vbox = QtGui.QVBoxLayout(self.parent)
         self.form = QtGui.QFormLayout()
         # self.hbox.setAlignment(QtCore.Qt.AlignTop)
@@ -64,10 +64,10 @@ class AdjustBar(QtGui.QWidget):
                 self.mmc.getProperty(self.camname, prop).replace(',', '.')))
             self.slid.valueChanged.connect(self.setAsDouble)
             self.spin.valueChanged.connect(self.setAsInt)
-        
+
         self.form.addRow(prop, self.spin)
         self.setLayout(self.vbox)
-        self.vbox.addLayout(self.form)                    
+        self.vbox.addLayout(self.form)
         self.vbox.addWidget(self.slid)
 
     @QtCore.Slot(float)
@@ -76,14 +76,14 @@ class AdjustBar(QtGui.QWidget):
         if self.slid.value() != target:
             self.slid.setValue(target)
             self.setDevProperty(value)
-    
+
     @QtCore.Slot(int)
     def setAsDouble(self, value):
         current = round(self.spin.value(), 2)
         target = round((value - self.minlim) / self.mult + self.minlim, 2)
         if current != target:
             self.spin.setValue(target)
-    
+
     @QtCore.Slot()
     def setDevProperty(self, value):
         self.mmc.setProperty(self.camname, self.prop, str(value))
@@ -91,7 +91,7 @@ class AdjustBar(QtGui.QWidget):
 
 class MicroscopeControl(QtGui.QGroupBox):
     """Control microscope devices.
-    
+
     Aware hardcode for properties is better way.
     """
     willRunOnce = QtCore.Signal()
@@ -105,21 +105,21 @@ class MicroscopeControl(QtGui.QGroupBox):
 
         self.vbox = QtGui.QVBoxLayout()
         self.setLayout(self.vbox)
-        
+
         self.form = QtGui.QFormLayout()
         self.in_vbox = QtGui.QVBoxLayout()
         self.horizontal = QtGui.QHBoxLayout()
         self.vbox.addLayout(self.form)
         self.vbox.addLayout(self.in_vbox)
         self.vbox.addLayout(self.horizontal)
-        
+
         self.streaming_btn = QtGui.QPushButton('Start')
         self.form.addRow('Acquisition', self.streaming_btn)
         self.streaming_btn.pressed.connect(self.toggle_streaming)
-        
+
         self.cont_cbx = QtGui.QCheckBox()
         self.form.addRow('Continuous', self.cont_cbx)
-        
+
         # Get scales and set default.
         self.objective = QtGui.QComboBox()
         self.objective.addItems(self.parent.CMicro.get_all_scalenames())
@@ -137,7 +137,7 @@ class MicroscopeControl(QtGui.QGroupBox):
         self.exposure.setValue(self.parent.mmc.getExposure())
         self.exposure.valueChanged.connect(self.parent.mmc.setExposure)
         self.form.addRow('Exposure', self.exposure)
-        
+
         self.gain = QtGui.QDoubleSpinBox()
         self.gain.setSingleStep(0.1)
         self.gain.setRange(
@@ -146,19 +146,19 @@ class MicroscopeControl(QtGui.QGroupBox):
         self.gain.setValue(float(self.parent.mmc.getProperty(self.camname, 'Gain')))
         self.gain.valueChanged.connect(self.set_gain)
         self.form.addRow('Gain', self.gain)
-        
+
         self.binning = QtGui.QComboBox()
         self.binning.addItems(self.parent.mmc.getAllowedPropertyValues(self.camname, 'Binning'))
-        self.binning.setCurrentIndex(                         
+        self.binning.setCurrentIndex(
             self.binning.findText(self.parent.mmc.getProperty(self.camname, 'Binning')))
         self.binning.currentIndexChanged.connect(self.set_binning)
         self.form.addRow('Binning', self.binning)
-        
+
         self.histview = QtGui.QLabel('Histogram')
         self.histview.setAlignment(QtCore.Qt.AlignCenter)
         self.histview.setFixedSize(256, 100)
         self.in_vbox.addWidget(self.histview)
-        
+
         self.horizontal.addWidget(QtGui.QLabel('R'))
         self.sbx_adjust_r = QtGui.QSpinBox()
         self.sbx_adjust_r.setRange(-254, 255)
@@ -171,11 +171,11 @@ class MicroscopeControl(QtGui.QGroupBox):
         self.sbx_adjust_b = QtGui.QSpinBox()
         self.sbx_adjust_b.setRange(-254, 255)
         self.horizontal.addWidget(self.sbx_adjust_b)
-        
+
         self.willRunOnce.connect(self.parent.VProc.runOnce)
         self.willRunContinuously.connect(self.parent.VProc.runContinuous)
         self.willStop.connect(self.parent.VProc.stop)
-    
+
     @QtCore.Slot()
     def toggle_streaming(self):
         if not self.parent.mmc.isSequenceRunning():
@@ -195,16 +195,16 @@ class MicroscopeControl(QtGui.QGroupBox):
     @QtCore.Slot(int)
     def change_scalename(self, index):
         self.parent.CMicro.scalename = str(self.objective.currentText())
-    
+
     @QtCore.Slot(float)
     def set_gain(self, value):
         self.parent.mmc.setProperty(self.camname, 'Gain', str(value))
-        
+
     @QtCore.Slot(int)
     def set_binning(self, index):
         value = self.binning.itemText(index)
         self.parent.mmc.setProperty(self.camname, 'Binning', str(value))
-    
+
     @QtCore.Slot()
     def setHistogram(self):
         img = self.parent.VProc.hist
@@ -214,7 +214,7 @@ class MicroscopeControl(QtGui.QGroupBox):
 
 class AnalysisControl(QtGui.QGroupBox):
     """Control image analysis workflow.
-    
+
     Cell segmentation controls.
     """
     def __init__(self, parent=None):
@@ -225,43 +225,43 @@ class AnalysisControl(QtGui.QGroupBox):
         self.vbox.setAlignment(QtCore.Qt.AlignTop)
         self.setLayout(self.vbox)
         self.in_vbox = QtGui.QVBoxLayout()
-        
+
         self.form = QtGui.QFormLayout()
         self.vbox.addLayout(self.in_vbox)
         self.vbox.addLayout(self.form)
-        
-#         self.cont_cbx = QtGui.QCheckBox()        
+
+#         self.cont_cbx = QtGui.QCheckBox()
 #         self.form.addRow('Analyze', self.cont_cbx)
-        
+
         self.vtype = QtGui.QSpinBox()
         self.vtype.setRange(0, 3)
         self.vtype.setValue(self.parent.VProc.CProcessor.vtype)
         self.form.addRow('VizType', self.vtype)
-        
+
         self.sizemax = QtGui.QSpinBox()
         self.sizemax.setSuffix(' px')
         self.sizemax.setRange(0, 9999999)
         self.sizemax.setValue(self.parent.VProc.CProcessor.max_size)
         self.form.addRow('Max size', self.sizemax)
-        
+
         self.sizemin = QtGui.QSpinBox()
         self.sizemin.setSuffix(' px')
         self.sizemin.setRange(0, 9999)
         self.sizemin.setValue(self.parent.VProc.CProcessor.min_size)
         self.form.addRow('Min size', self.sizemin)
-        
+
         self.peak_dist = QtGui.QSpinBox()
         self.peak_dist.setSuffix(' px')
         self.peak_dist.setRange(0, 9999)
         self.peak_dist.setValue(self.parent.VProc.CProcessor.peak_distance)
         self.form.addRow('Peak distance', self.peak_dist)
-        
+
         self.dab_th_shift = QtGui.QSpinBox()
         self.dab_th_shift.setSuffix(' %')
         self.dab_th_shift.setRange(-100, 100)
         self.dab_th_shift.setValue(self.parent.VProc.CProcessor.th_dab_shift)
         self.form.addRow('DAB threshold shift', self.dab_th_shift)
-        
+
         self.hem_th_shift = QtGui.QSpinBox()
         self.hem_th_shift.setSuffix(' %')
         self.hem_th_shift.setRange(-100, 100)
@@ -273,13 +273,16 @@ class GLFrame(QtOpenGL.QGLWidget):
     """OpenGL based video output Qt widget.
 
     Put RGB image to texture and show it with OpenGL.
+
+    * Разрешение Viewport определяется размером окна
+        * Соотношение сторон фиксированное 4:3 (зависит от `setBaseSize()` при установке текстуры)
     """
     def __init__(self):
         super(GLFrame, self).__init__()
         self._tex_data = None
         self._texture_id = None
-        self.rect = QtCore.QRectF(QtCore.QPointF(-1, -1), QtCore.QPointF(1, 1))
-        
+        self.rect = QtCore.QRectF(-1, -1, 2, 2)  # x, y, w, h
+
     def initializeGL(self):
         glClearColor(0.4, 0.1, 0.1, 1.0)
         glEnable(GL_TEXTURE_2D)
@@ -288,22 +291,22 @@ class GLFrame(QtOpenGL.QGLWidget):
         """Replace old texture data and show it on screen.
         """
         if self._texture_id is not None:
-            # glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             self.drawTexture(self.rect, self._texture_id)
+            # glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             # glBegin(GL_QUADS)
-            # glTexCoord2f(0, 1); glVertex3f(-1, -1, -1)
-            # glTexCoord2f(1, 1); glVertex3f(1, -1, -1)
-            # glTexCoord2f(1, 0); glVertex3f(1, 1, -1)
-            # glTexCoord2f(0, 0); glVertex3f(-1, 1, -1)
+            # glTexCoord2f(0, 0); glVertex3f(-1.0, 1.0, 0.0);  # Top left (w,h,d)
+            # glTexCoord2f(1, 0); glVertex3f( 1.0, 1.0, 0.0);  # Top right
+            # glTexCoord2f(1, 1); glVertex3f( 1.0,-1.0, 0.0);  # Bottom right
+            # glTexCoord2f(0, 1); glVertex3f(-1.0,-1.0, 0.0);  # Bottom left
             # glEnd()
 
     def resizeGL(self, width, height):
         """Keep aspect ratio in viewport.
         """
-        glViewport(0, 0, width, height)
-        new_size = QtCore.QSize(self.baseSize())
-        new_size.scale(QtCore.QSize(width, height), QtCore.Qt.KeepAspectRatio)
-        self.resize(new_size)
+        widget_size = self.baseSize()
+        widget_size.scale(width, height, QtCore.Qt.KeepAspectRatio)
+        glViewport(0, 0, widget_size.width(), widget_size.height())
+        self.resize(widget_size)
 
     def setData(self, array):
         """Set numpy array as new texture to widget.
@@ -370,7 +373,7 @@ class VideoProcessor(QtCore.QObject):
     newframe = QtCore.Signal()
     histogramready = QtCore.Signal()
     modelGotAssay = QtCore.Signal()
-    
+
     def __init__(self, mmcore, parent=None):
         super(VideoProcessor, self).__init__()
         self.parent = parent
@@ -383,7 +386,7 @@ class VideoProcessor(QtCore.QObject):
         self.rgb = None
         self.__wb_shift = [0, 0, 0]  # RGB white balance
         self.out = None
-        
+
         self.workTimer = QtCore.QTimer(parent=self)
         self.workTimer.setInterval(20)
         self.workTimer.timeout.connect(self.process_frame)
@@ -444,7 +447,7 @@ class VideoProcessor(QtCore.QObject):
             else:
                 self.__model.appendAssay(self.CProcessor.take_assay())
             self.modelGotAssay.emit()
-    
+
     def getModel(self):
         return self.__model
 
@@ -453,15 +456,15 @@ class VideoProcessor(QtCore.QObject):
         self.workTimer.stop()
         self.mmc.stopSequenceAcquisition()
         print('Video acquisition terminated.')
-    
+
     @QtCore.Slot()
     def setVtype(self, value):
         self.CProcessor.vtype = value
-    
+
     @QtCore.Slot()
     def setScale(self, value):
         self.CProcessor.scale = value
-    
+
     @QtCore.Slot()
     def setDabThresholdShift(self, value):
         self.CProcessor.th_dab_shift = value
@@ -481,15 +484,15 @@ class VideoProcessor(QtCore.QObject):
     @QtCore.Slot()
     def setPeakDistance(self, value):
         self.CProcessor.peak_distance = value
-    
+
     @QtCore.Slot()
     def setRShift(self, value):
         self.__wb_shift[0] = value
-    
+
     @QtCore.Slot()
     def setGShift(self, value):
         self.__wb_shift[1] = value
-        
+
     @QtCore.Slot()
     def setBShift(self, value):
         self.__wb_shift[2] = value
