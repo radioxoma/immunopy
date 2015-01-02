@@ -284,15 +284,15 @@ class GLFrame(QtOpenGL.QGLWidget):
         self.rect = QtCore.QRectF(-1, -1, 2, 2)  # x, y, w, h
 
     def initializeGL(self):
-        glClearColor(0.4, 0.1, 0.1, 1.0)
+        glClearColor(0.85, 0.85, 0.85, 1.0)  # Like Qt background
         glEnable(GL_TEXTURE_2D)
 
     def paintGL(self):
         """Replace old texture data and show it on screen.
         """
         if self._texture_id is not None:
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             self.drawTexture(self.rect, self._texture_id)
-            # glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             # glBegin(GL_QUADS)
             # glTexCoord2f(0, 0); glVertex3f(-1.0, 1.0, 0.0);  # Top left (w,h,d)
             # glTexCoord2f(1, 0); glVertex3f( 1.0, 1.0, 0.0);  # Top right
@@ -306,7 +306,7 @@ class GLFrame(QtOpenGL.QGLWidget):
         widget_size = self.baseSize()
         widget_size.scale(width, height, QtCore.Qt.KeepAspectRatio)
         glViewport(0, 0, widget_size.width(), widget_size.height())
-        self.resize(widget_size)
+#         self.resize(widget_size)
 
     def setData(self, array):
         """Set numpy array as new texture to widget.
@@ -366,6 +366,55 @@ class GLFrame(QtOpenGL.QGLWidget):
                 GL_TEXTURE_2D, 0, GL_LUMINANCE,
                 self._tex_data.shape[1], self._tex_data.shape[0],
                 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, self._tex_data)
+
+
+class VideoWidget(QtGui.QWidget):
+    """Video output with OpenGL and size controls.
+    """
+    def __init__(self, parent=None):
+        super(VideoWidget, self).__init__()
+        self.parent = parent
+        self.vbox = QtGui.QVBoxLayout()
+        self.setLayout(self.vbox)
+        self.bar = QtGui.QToolBar('ToolBar')
+ 
+        self.scrollableView = QtGui.QScrollArea()
+        self.glWidget = GLFrame()
+        self.glWidget.setSizePolicy(QtGui.QSizePolicy.Ignored, QtGui.QSizePolicy.Ignored)
+        self.scrollableView.setWidget(self.glWidget)
+        self.vbox.addWidget(self.bar)
+        self.vbox.addWidget(self.scrollableView)
+        
+        self.frameResNatural = self.bar.addAction('1:1', self.resNatural)
+#         self.frameResPlus = self.bar.addAction('+', self.resPlus)
+#         self.frameResMinus = self.bar.addAction(u'−', self.resMinus)
+        self.frameResFit = self.bar.addAction('Fit', self.resFit)
+        self.resFit()  # Fit viewport on start
+
+    @QtCore.Slot()
+    def resNatural(self):
+        self.scrollableView.setWidgetResizable(False)
+        self.glWidget.resize(self.glWidget.baseSize())
+
+    @QtCore.Slot()
+    def resPlus(self):
+        print("resPlus")
+
+    @QtCore.Slot()
+    def resMinus(self):
+        print("resMinus")
+
+    @QtCore.Slot()
+    def resFit(self):
+        """Fit in scrollableView size.
+        """
+        self.scrollableView.setWidgetResizable(True)
+        widget_size = self.glWidget.baseSize()
+        widget_size.scale(self.scrollableView.size(), QtCore.Qt.KeepAspectRatio)
+        self.scrollableView.resize(widget_size)
+
+    def setData(self, array):
+        self.glWidget.setData(array)
 
 
 class VideoProcessor(QtCore.QObject):

@@ -44,8 +44,7 @@ class MainWindow(QtGui.QMainWindow):
         
         self.MControl = ipui.MicroscopeControl(parent=self)
         self.AControl = ipui.AnalysisControl(parent=self)
-        self.GLWiget = ipui.GLFrame()
-        self.GLWiget.setMinimumSize(640, 480)
+        self.GLWiget = ipui.VideoWidget(parent=self)
         self.setCentralWidget(self.GLWiget)
         self.setWindowTitle('Immunopy')
         
