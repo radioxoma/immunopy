@@ -7,15 +7,16 @@ Immunopy - программа с графическим интерфейсом, 
 
 ## Зависимости ##
 
-* Python 2
+* Python 2.7
 * Numpy
 * Scipy
 * Scikits-image
 * Pillow
-* OpenCV
-* Micromanager
+* OpenCV 2.4.10 (<3.0)
+* Micromanager 1.4.18 (мои патчи для BaumerOptronic)
 * PyQt или PySide
 * PyOpenGL
+* PyOpenCL
 
 ## Конфигурация ##
 
