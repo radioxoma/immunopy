@@ -93,6 +93,8 @@ class MainWindow(QtGui.QMainWindow):
         """
         menuBar = QtGui.QMenuBar(parent=None)
         self.setMenuBar(menuBar)
+        fileMenu = menuBar.addMenu('&File')
+        fileMenu.addAction("E&xit", QtGui.qApp.closeAllWindows)
         microscopeMenu = menuBar.addMenu('&Microscope')
         microscopeMenu.addAction(self.MPBrowser.showPropertyBrowserAction)
         viewMenu = menuBar.addMenu('&View')
