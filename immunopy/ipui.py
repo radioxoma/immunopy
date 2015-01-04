@@ -103,12 +103,12 @@ class MicroscopeControl(QtGui.QGroupBox):
         self.parent = parent
         self.setTitle('Microscope control')
 
-        self.vbox = QtGui.QVBoxLayout(self.parent)
+        self.vbox = QtGui.QVBoxLayout()
         self.setLayout(self.vbox)
         
         self.form = QtGui.QFormLayout()
-        self.in_vbox = QtGui.QVBoxLayout(self.parent)
-        self.horizontal = QtGui.QHBoxLayout(self.parent)
+        self.in_vbox = QtGui.QVBoxLayout()
+        self.horizontal = QtGui.QHBoxLayout()
         self.vbox.addLayout(self.form)
         self.vbox.addLayout(self.in_vbox)
         self.vbox.addLayout(self.horizontal)
@@ -221,7 +221,7 @@ class AnalysisControl(QtGui.QGroupBox):
         super(AnalysisControl, self).__init__(parent)
         self.parent = parent
         self.setTitle('Analysis control')
-        self.vbox = QtGui.QVBoxLayout(self.parent)
+        self.vbox = QtGui.QVBoxLayout()
         self.vbox.setAlignment(QtCore.Qt.AlignTop)
         self.setLayout(self.vbox)
         self.in_vbox = QtGui.QVBoxLayout()
