@@ -113,7 +113,7 @@ class MicroscopeControl(QtGui.QGroupBox):
         self.vbox.addLayout(self.in_vbox)
         self.vbox.addLayout(self.horizontal)
 
-        self.streaming_btn = QtGui.QPushButton('Start')
+        self.streaming_btn = QtGui.QPushButton('&Start')
         self.form.addRow('Acquisition', self.streaming_btn)
         self.streaming_btn.pressed.connect(self.toggle_streaming)
 
@@ -181,14 +181,14 @@ class MicroscopeControl(QtGui.QGroupBox):
         if not self.parent.mmc.isSequenceRunning():
             if self.cont_cbx.checkState() == QtCore.Qt.Checked:
                 self.willRunContinuously.emit()
-                self.streaming_btn.setText('Stop')
+                self.streaming_btn.setText('&Stop')
                 self.cont_cbx.setEnabled(False)
                 self.binning.setEnabled(False)
             else:
                 self.willRunOnce.emit()
         else:
             self.willStop.emit()
-            self.streaming_btn.setText('Start')
+            self.streaming_btn.setText('&Start')
             self.cont_cbx.setEnabled(True)
             self.binning.setEnabled(True)
 

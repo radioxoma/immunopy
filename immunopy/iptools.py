@@ -168,9 +168,9 @@ class CellProcessor(object):
     def __init__(self, scale, colormap, mp=False):
         super(CellProcessor, self).__init__()
         self.white_balance_shift = [0, 0, 0]  # RGB colors shift
-        self.th_dab_shift = 0
+        self.th_dab_shift = -15.0
         self.th_hem_shift = 0
-        self.min_size = 80
+        self.min_size = 60
         self.max_size = 9999999 # 3000 temporary disabled
         self.vtype = 1
 
@@ -276,10 +276,10 @@ class CellProcessor(object):
         scaled = rescale(meaned, self.__scale)
 
         # Unmix stains
-        hdx = cdeconv.color_deconvolution(scaled, color.hdx_from_rgb)
-#         hdx = cdeconv.color_deconvolution(scaled, cdeconv.hpa_hdx_from_rgb)
-        hem = hdx[:,:,0]
-        dab = hdx[:,:,1]
+        hed = cdeconv.color_deconvolution(scaled, color.hed_from_rgb)
+#         hed = cdeconv.color_deconvolution(scaled, cdeconv.hpa_hdx_from_rgb)
+        hem = hed[:,:,0]
+        dab = hed[:,:,2]
 
         # MULTICORE -----------------------------------------------------------
         if self.pool:
