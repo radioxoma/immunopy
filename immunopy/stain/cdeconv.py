@@ -12,14 +12,6 @@ from scipy import linalg
 from skimage.util import dtype
 
 
-# Vectors for images from Human Protein Atlas
-hpa_rgb_from_hdx = np.array([[0.684, 0.696, 0.183],
-                             [0.250, 0.500, 0.850],
-                             [  0.0,   0.0,   0.0]])
-hpa_rgb_from_hdx[2, :] = np.cross(hpa_rgb_from_hdx[0, :], hpa_rgb_from_hdx[1, :])
-hpa_hdx_from_rgb = linalg.inv(hpa_rgb_from_hdx)
-
-
 def fastdot(A, B):
     """Uses blas libraries directly to perform dot product.
 

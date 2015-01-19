@@ -21,6 +21,7 @@ import cv2
 from PySide import QtCore
 import lut
 import statdata
+from stain import vector
 try:
     from stain import cdeconvcl
     cdeconv = cdeconvcl.ColorDeconvolution()
@@ -276,10 +277,11 @@ class CellProcessor(object):
         scaled = rescale(meaned, self.__scale)
 
         # Unmix stains
-        hed = cdeconv.color_deconvolution(scaled, color.hed_from_rgb)
+        hed = cdeconv.color_deconvolution(scaled, vector.vopab_hdx_from_rgb)
+#         hed = cdeconv.color_deconvolution(scaled, color.hed_from_rgb)
 #         hed = cdeconv.color_deconvolution(scaled, cdeconv.hpa_hdx_from_rgb)
         hem = hed[:,:,0]
-        dab = hed[:,:,2]
+        dab = hed[:,:,1]
 
         # MULTICORE -----------------------------------------------------------
         if self.pool:
