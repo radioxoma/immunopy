@@ -233,9 +233,10 @@ class AnalysisControl(QtGui.QGroupBox):
 #         self.cont_cbx = QtGui.QCheckBox()
 #         self.form.addRow('Analyze', self.cont_cbx)
 
-        self.vtype = QtGui.QSpinBox()
-        self.vtype.setRange(0, 3)
-        self.vtype.setValue(self.parent.VProc.CProcessor.vtype)
+        self.vtype = QtGui.QComboBox()
+        self.vtype.addItems(self.parent.VProc.CProcessor.vtypes)
+        self.vtype.setCurrentIndex(
+            self.vtype.findText(self.parent.VProc.CProcessor.vtype))
         self.form.addRow('VizType', self.vtype)
 
         self.sizemax = QtGui.QSpinBox()
@@ -315,6 +316,9 @@ class GLFrame(QtOpenGL.QGLWidget):
         if self._tex_data is not None:
             if self._tex_data.shape == array.shape:
                 self._tex_data = array
+                # Convention:
+                #    * 3D images are RGB with uint8 dtype
+                #    * 2D images are grayscale with float32 dtype
                 if len(self._tex_data.shape) == 3:
                     # Prevent segfault: glTexSubImage would not accept None.
                     glTexSubImage2D(
@@ -325,7 +329,7 @@ class GLFrame(QtOpenGL.QGLWidget):
                     glTexSubImage2D(
                         GL_TEXTURE_2D, 0, 0, 0,
                         self._tex_data.shape[1], self._tex_data.shape[0],
-                        GL_LUMINANCE, GL_UNSIGNED_BYTE, self._tex_data)
+                        GL_LUMINANCE, GL_FLOAT, self._tex_data)
             else:
                 self.deleteTexture(self._texture_id)
                 self.createTex(array)
@@ -365,7 +369,7 @@ class GLFrame(QtOpenGL.QGLWidget):
             glTexImage2D(
                 GL_TEXTURE_2D, 0, GL_LUMINANCE,
                 self._tex_data.shape[1], self._tex_data.shape[0],
-                0, GL_LUMINANCE, GL_UNSIGNED_BYTE, self._tex_data)
+                0, GL_LUMINANCE, GL_FLOAT, self._tex_data)
 
 
 class VideoWidget(QtGui.QWidget):
@@ -505,10 +509,12 @@ class VideoProcessor(QtCore.QObject):
         self.workTimer.stop()
         self.mmc.stopSequenceAcquisition()
         print('Video acquisition terminated.')
-
+    
     @QtCore.Slot()
     def setVtype(self, value):
-        self.CProcessor.vtype = value
+        print(value)
+        print(self.CProcessor.vtypes[value])
+        self.CProcessor.vtype = self.CProcessor.vtypes[value]
 
     @QtCore.Slot()
     def setScale(self, value):

@@ -16,6 +16,7 @@ from scipy import ndimage
 from skimage.exposure import histogram
 from skimage.morphology import watershed
 from skimage.feature import peak_local_max
+from skimage.util import dtype
 from skimage import color
 import cv2
 from PySide import QtCore
@@ -173,7 +174,12 @@ class CellProcessor(object):
         self.th_hem_shift = 0
         self.min_size = 60
         self.max_size = 9999999 # 3000 temporary disabled
-        self.vtype = 1
+        self.vtypes = (
+            'Video', 
+            'DAB stain', 'DAB mask',
+            'HEM stain', 'HEM mask',
+            'Overlay', 'DAB cells', 'HEM cells')
+        self.vtype = self.vtypes[0]  # Default item e.g. for combobox
 
         self.peak_distance = 8
         self.scale = scale
@@ -266,7 +272,7 @@ class CellProcessor(object):
         """
         # Light source correction
         # correct_wb(image, self.__white_balance_shift)
-        if self.vtype == 0:
+        if self.vtype == 'Video':
             return image
         rgb = image.copy()
 
@@ -277,11 +283,18 @@ class CellProcessor(object):
         scaled = rescale(meaned, self.__scale)
 
         # Unmix stains
-        hed = cdeconv.color_deconvolution(scaled, vector.vopab_hdx_from_rgb)
-#         hed = cdeconv.color_deconvolution(scaled, color.hed_from_rgb)
-#         hed = cdeconv.color_deconvolution(scaled, cdeconv.hpa_hdx_from_rgb)
+#         hed = cdeconv.color_deconvolution(scaled, vector.vopab_hdx_from_rgb)
+#         hed = cdeconv.color_deconvolution(scaled, vector.hpa_hdx_from_rgb)
+        hed = cdeconv.color_deconvolution(scaled, color.hdx_from_rgb)
         hem = hed[:,:,0]
         dab = hed[:,:,1]
+
+        if self.vtype == 'DAB stain':
+            dab /= dab.max()
+            return dab
+        elif self.vtype == 'HEM stain':
+            hem /= hem.max()
+            return hem
 
         # MULTICORE -----------------------------------------------------------
         if self.pool:
@@ -294,17 +307,22 @@ class CellProcessor(object):
             hemfiltered, self.st_hem_cell_count = worker(hem, self.__threshold_hem_shift, self.peak_distance, self.min_size, self.max_size)
         # MULTICORE END -------------------------------------------------------
 
+        if self.vtype == 'DAB mask':
+            return dabfiltered > 0
+        elif self.vtype == 'HEM mask':
+            return hemfiltered > 0
+
         # Stats
         # self.stCellFraction =  float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100
         # self.stDabHemFraction = areaFraction(hemfiltered, dabfiltered) * 100
         self.st_dabdabhem_fraction = areaDisjFraction(hemfiltered, dabfiltered) * 100
 
         # Visualization
-        if self.vtype == 1:
+        if self.vtype == 'Overlay':
             overlay = drawOverlay(scaled, dabfiltered, hemfiltered)
-        elif self.vtype == 2:
+        elif self.vtype == 'DAB cells':
             overlay = lut.apply_lut(dabfiltered, self.colormap)
-        elif self.vtype == 3:
+        elif self.vtype == 'HEM cells':
             overlay = lut.apply_lut(hemfiltered, self.colormap)
         else:
             overlay = drawOverlay(scaled, dabfiltered, hemfiltered)

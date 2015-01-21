@@ -41,13 +41,13 @@ class MainWindow(QtGui.QMainWindow):
         self.VProc = ipui.VideoProcessor(mmcore=self.mmc, parent=self)
         self.VProc.moveToThread(self.workThread)
         self.workThread.start()
-        
+
         self.MControl = ipui.MicroscopeControl(parent=self)
         self.AControl = ipui.AnalysisControl(parent=self)
         self.GLWiget = ipui.VideoWidget(parent=self)
         self.setCentralWidget(self.GLWiget)
         self.setWindowTitle('Immunopy')
-        
+
         self.dock = QtGui.QDockWidget('Ground control', parent=self)
         self.dockcontainer = QtGui.QWidget()
         self.dockvbox = QtGui.QVBoxLayout()
@@ -57,28 +57,28 @@ class MainWindow(QtGui.QMainWindow):
         self.dock.setWidget(self.dockcontainer)
         self.addDockWidget(
             QtCore.Qt.DockWidgetArea(QtCore.Qt.LeftDockWidgetArea), self.dock)
-        
+
         self.statBrowser = statdata.StatisticsBrowser(self.VProc.getModel())
         self.dockStat = QtGui.QDockWidget('Statistics', parent=self)
         self.dockStat.setWidget(self.statBrowser)
         self.addDockWidget(
             QtCore.Qt.DockWidgetArea(QtCore.Qt.BottomDockWidgetArea), self.dockStat)
-        
+
         self.VProc.newframe.connect(self.updateFrame)
         self.VProc.histogramready.connect(self.MControl.setHistogram)
         self.CMicro.scale_changed.connect(self.VProc.setScale)
-        
+
         self.MControl.sbx_adjust_r.valueChanged.connect(self.VProc.setRShift)
         self.MControl.sbx_adjust_g.valueChanged.connect(self.VProc.setGShift)
         self.MControl.sbx_adjust_b.valueChanged.connect(self.VProc.setBShift)
-        
-        self.AControl.vtype.valueChanged.connect(self.VProc.setVtype)
+
+        self.AControl.vtype.currentIndexChanged.connect(self.VProc.setVtype)
         self.AControl.sizemax.valueChanged.connect(self.VProc.setMaxSize)
         self.AControl.sizemin.valueChanged.connect(self.VProc.setMinSize)
         self.AControl.peak_dist.valueChanged.connect(self.VProc.setPeakDistance)
         self.AControl.dab_th_shift.valueChanged.connect(self.VProc.setDabThresholdShift)
         self.AControl.hem_th_shift.valueChanged.connect(self.VProc.setHemThresholdShift)
-        
+
         self.statBrowser.wantAssay.connect(self.VProc.pushAssay)
         self.VProc.modelGotAssay.connect(self.statBrowser.ready)
 
