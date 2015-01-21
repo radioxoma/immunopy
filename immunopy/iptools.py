@@ -18,6 +18,7 @@ from skimage.morphology import watershed
 from skimage.feature import peak_local_max
 from skimage.util import dtype
 from skimage import color
+from skimage import exposure
 import cv2
 from PySide import QtCore
 import lut
@@ -175,7 +176,7 @@ class CellProcessor(object):
         self.min_size = 60
         self.max_size = 9999999 # 3000 temporary disabled
         self.vtypes = (
-            'Video', 
+            'Video', 'Video adaptive',
             'DAB stain', 'DAB mask',
             'HEM stain', 'HEM mask',
             'Overlay', 'DAB cells', 'HEM cells')
@@ -274,6 +275,10 @@ class CellProcessor(object):
         # correct_wb(image, self.__white_balance_shift)
         if self.vtype == 'Video':
             return image
+        if self.vtype == 'Video adaptive':
+#             image = exposure.rescale_intensity(image, out_range=(0, 255))
+            image = exposure.equalize_hist(image).astype(np.float32)
+            return image
         rgb = image.copy()
 
         # Enhancement (can abuse threshold output)
@@ -290,11 +295,9 @@ class CellProcessor(object):
         dab = hed[:,:,1]
 
         if self.vtype == 'DAB stain':
-            dab /= dab.max()
-            return dab
+            return normalize(dab)
         elif self.vtype == 'HEM stain':
-            hem /= hem.max()
-            return hem
+            return normalize(hem)
 
         # MULTICORE -----------------------------------------------------------
         if self.pool:
@@ -308,9 +311,13 @@ class CellProcessor(object):
         # MULTICORE END -------------------------------------------------------
 
         if self.vtype == 'DAB mask':
-            return dabfiltered > 0
+            out = np.zeros_like(dabfiltered, dtype=np.uint8)
+            out[dabfiltered > 0] = 255
+            return out
         elif self.vtype == 'HEM mask':
-            return hemfiltered > 0
+            out = np.zeros_like(hemfiltered, dtype=np.uint8)
+            out[hemfiltered > 0] = 255
+            return out
 
         # Stats
         # self.stCellFraction =  float(dabfnum) / (hemfnum + dabfnum + 0.001) * 100

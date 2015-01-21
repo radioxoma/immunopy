@@ -11,6 +11,7 @@ Immunopy GUI primitives.
 
 import sys
 import time
+import numpy as np
 from PySide import QtCore
 from PySide import QtGui
 from PySide import QtOpenGL
@@ -314,41 +315,37 @@ class GLFrame(QtOpenGL.QGLWidget):
         """
         # self.makeCurrent()
         if self._tex_data is not None:
-            if self._tex_data.shape == array.shape:
-                self._tex_data = array
-                # Convention:
-                #    * 3D images are RGB with uint8 dtype
-                #    * 2D images are grayscale with float32 dtype
-                if len(self._tex_data.shape) == 3:
-                    # Prevent segfault: glTexSubImage would not accept None.
-                    glTexSubImage2D(
-                        GL_TEXTURE_2D, 0, 0, 0,
-                        self._tex_data.shape[1], self._tex_data.shape[0],
-                        GL_RGB, GL_UNSIGNED_BYTE, self._tex_data)
-                elif len(self._tex_data.shape) == 2:
-                    glTexSubImage2D(
-                        GL_TEXTURE_2D, 0, 0, 0,
-                        self._tex_data.shape[1], self._tex_data.shape[0],
-                        GL_LUMINANCE, GL_FLOAT, self._tex_data)
+            if (self._tex_data.shape == array.shape and self._tex_data.dtype == array.dtype):
+                self.update_texture(array)
             else:
                 self.deleteTexture(self._texture_id)
-                self.createTex(array)
-                self.setBaseSize(array.shape[1], array.shape[0])
-                winsize = self.size()
-                self.resizeGL(winsize.width(), winsize.height())
+                self.create_texture(array)
+                self.update_widget_size()
         else:
-            self.createTex(array)
-            self.setBaseSize(array.shape[1], array.shape[0])
-            winsize = self.size()
-            self.resizeGL(winsize.width(), winsize.height())
+            self.create_texture(array)
+            self.update_widget_size()
         self.updateGL()
 
-    def createTex(self, array):
+    def create_texture(self, array):
         """Create texture object for given RGB or grayscale uint8 array.
         """
         self.makeCurrent()
+        # Update texture properties
         self._tex_data = array
-        # Prepare an empty texture.
+        if len(self._tex_data.shape) == 3:
+            self._tex_color = GL_RGB
+        elif len(self._tex_data.shape) == 2:
+            self._tex_color = GL_LUMINANCE
+
+        if self._tex_data.dtype == np.uint8:
+            self._tex_dtype = GL_UNSIGNED_BYTE
+        elif self._tex_data.dtype == np.float32:
+            self._tex_dtype = GL_FLOAT
+        else:
+            raise ValueError("{} dtype is not supported, "
+                "use uint8 or float32 instead".format(array.dtype))
+ 
+        # Prepare an empty texture
         self._texture_id = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, self._texture_id)
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
@@ -358,18 +355,24 @@ class GLFrame(QtOpenGL.QGLWidget):
         # Linear filtering (?)
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        if len(self._tex_data.shape) == 3:
-            # Color RGB texture
-            glTexImage2D(
-                GL_TEXTURE_2D, 0, GL_RGB,
-                self._tex_data.shape[1], self._tex_data.shape[0],
-                0, GL_RGB, GL_UNSIGNED_BYTE, self._tex_data)
-        elif len(self._tex_data.shape) == 2:
-            # Grayscale texture
-            glTexImage2D(
-                GL_TEXTURE_2D, 0, GL_LUMINANCE,
-                self._tex_data.shape[1], self._tex_data.shape[0],
-                0, GL_LUMINANCE, GL_FLOAT, self._tex_data)
+        glTexImage2D(
+            GL_TEXTURE_2D, 0, GL_RGB,
+            self._tex_data.shape[1], self._tex_data.shape[0],
+            0, self._tex_color, self._tex_dtype, self._tex_data)
+
+    def update_texture(self, array):
+        # Prevent segfault: glTexSubImage would not accept None.
+        self.makeCurrent()
+        self._tex_data = array
+        glTexSubImage2D(
+            GL_TEXTURE_2D, 0, 0, 0,
+            self._tex_data.shape[1], self._tex_data.shape[0],
+            self._tex_color, self._tex_dtype, self._tex_data)
+
+    def update_widget_size(self):
+        self.setBaseSize(self._tex_data.shape[1], self._tex_data.shape[0])
+        winsize = self.size()
+        self.resizeGL(winsize.width(), winsize.height())
 
 
 class VideoWidget(QtGui.QWidget):
