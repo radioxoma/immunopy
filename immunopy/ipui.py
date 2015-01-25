@@ -110,6 +110,7 @@ class MicroscopeControl(QtGui.QGroupBox):
         self.form = QtGui.QFormLayout()
         self.in_vbox = QtGui.QVBoxLayout()
         self.horizontal = QtGui.QHBoxLayout()
+        self.horizontal.setAlignment(QtCore.Qt.AlignLeft)
         self.vbox.addLayout(self.form)
         self.vbox.addLayout(self.in_vbox)
         self.vbox.addLayout(self.horizontal)
@@ -172,6 +173,16 @@ class MicroscopeControl(QtGui.QGroupBox):
         self.sbx_adjust_b = QtGui.QSpinBox()
         self.sbx_adjust_b.setRange(-254, 255)
         self.horizontal.addWidget(self.sbx_adjust_b)
+        self.btn_autowb = QtGui.QPushButton('Auto')
+        self.btn_autowb.setToolTip(
+            "Please remove slice and click the button")
+        self.btn_autowb.setStyleSheet("padding: 3px;")
+        self.horizontal.addWidget(self.btn_autowb)
+        self.btn_resetwb = QtGui.QPushButton('Reset')
+        self.btn_resetwb.setToolTip("Reset channels shifts to zero")
+        self.btn_resetwb.setStyleSheet("padding: 3px;")
+        self.btn_resetwb.clicked.connect(self.resetWbControls)
+        self.horizontal.addWidget(self.btn_resetwb)
 
         self.willRunOnce.connect(self.parent.VProc.runOnce)
         self.willRunContinuously.connect(self.parent.VProc.runContinuous)
@@ -212,7 +223,19 @@ class MicroscopeControl(QtGui.QGroupBox):
         image = QtGui.QImage(img, img.shape[1], img.shape[0], QtGui.QImage.Format_ARGB32)
         self.histview.setPixmap(QtGui.QPixmap(image))
 
-
+    @QtCore.Slot()
+    def updateWbControls(self):
+        r, g, b = self.parent.VProc.get_white_point()
+        self.sbx_adjust_r.setValue(r)
+        self.sbx_adjust_g.setValue(g)
+        self.sbx_adjust_b.setValue(b)
+    
+    def resetWbControls(self):
+        self.sbx_adjust_r.setValue(0)
+        self.sbx_adjust_g.setValue(0)
+        self.sbx_adjust_b.setValue(0)
+        
+        
 class AnalysisControl(QtGui.QGroupBox):
     """Control image analysis workflow.
 
@@ -429,6 +452,7 @@ class VideoProcessor(QtCore.QObject):
     newframe = QtCore.Signal()
     histogramready = QtCore.Signal()
     modelGotAssay = QtCore.Signal()
+    newwhitepoint = QtCore.Signal()
 
     def __init__(self, mmcore, parent=None):
         super(VideoProcessor, self).__init__()
@@ -440,7 +464,7 @@ class VideoProcessor(QtCore.QObject):
         self.__model = statdata.StatDataModel()
         self.rgb32 = None
         self.rgb = None
-        self.__wb_shift = [0, 0, 0]  # RGB white balance
+        self._wb_shift = [0, 0, 0]  # RGB white balance
         self.out = None
 
         self.workTimer = QtCore.QTimer(parent=self)
@@ -448,6 +472,17 @@ class VideoProcessor(QtCore.QObject):
         self.workTimer.timeout.connect(self.process_frame)
         self.__singleshot = False  # Snap one image flag
         self.__lock = QtCore.QMutex()
+
+    @QtCore.Slot()
+    def set_white_point(self):
+        rgb_shift = self.HPlotter.get_white_point()
+        if rgb_shift is not None:
+            self._wb_shift[1:] = rgb_shift[1:]
+            self.newwhitepoint.emit()
+
+    @QtCore.Slot()
+    def get_white_point(self):
+        return self._wb_shift
 
     @QtCore.Slot()
     def process_frame(self):
@@ -465,7 +500,7 @@ class VideoProcessor(QtCore.QObject):
                     print('No frame')
             if self.rgb32 is not None:
                 self.rgb = iptools.rgb32asrgb(self.rgb32)
-                iptools.correct_wb(self.rgb, self.__wb_shift)
+                iptools.correct_wb(self.rgb, self._wb_shift)
                 self.hist = self.HPlotter.plot(self.rgb)
                 self.histogramready.emit()
                 self.out = self.CProcessor.process(self.rgb)
@@ -545,15 +580,15 @@ class VideoProcessor(QtCore.QObject):
 
     @QtCore.Slot()
     def setRShift(self, value):
-        self.__wb_shift[0] = value
+        self._wb_shift[0] = value
 
     @QtCore.Slot()
     def setGShift(self, value):
-        self.__wb_shift[1] = value
+        self._wb_shift[1] = value
 
     @QtCore.Slot()
     def setBShift(self, value):
-        self.__wb_shift[2] = value
+        self._wb_shift[2] = value
 
 
 if __name__ == '__main__':
