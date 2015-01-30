@@ -14,6 +14,7 @@ import unittest
 curdir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, curdir + '/../immunopy')
 
+import numpy as np
 from scipy import misc
 from skimage import color
 from skimage import filter as filters
@@ -42,7 +43,8 @@ class Test(unittest.TestCase):
 
 class TestThresholdIsodata(unittest.TestCase):
     def setUp(self):
-        self.rgb = misc.imread("./immunopy/image/hdab256.tif")
+        self.rgb = misc.imread(
+            os.path.join(curdir, "../immunopy/image/hdab256.tif"))
         self.hdx = color.separate_stains(self.rgb, color.hdx_from_rgb)
         self.hem = self.hdx[:,:,0]
         self.dab = self.hdx[:,:,1]
@@ -88,7 +90,8 @@ class TestThresholdIsodata(unittest.TestCase):
 
 class TestThresholdYen(unittest.TestCase):
     def setUp(self):
-        self.rgb = misc.imread("./immunopy/image/hdab256.tif")
+        self.rgb = misc.imread(
+            os.path.join(curdir, "../immunopy/image/hdab256.tif"))
         self.hdx = color.separate_stains(self.rgb, color.hdx_from_rgb)
         self.hem = self.hdx[:,:,0]
         self.dab = self.hdx[:,:,1]
@@ -129,6 +132,57 @@ class TestThresholdYen(unittest.TestCase):
         t = iptools.threshold_yen(image=self.dab, shift=5)
         self.assertAlmostEqual(t, -0.7209012, places=5)
 
+
+class TestImageAlgorytms(unittest.TestCase):
+    def setUp(self):
+        self.arr1 = np.array([
+            [0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+            [0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+            [0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+            [0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+            [0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], dtype=np.uint64)
+
+        self.arr2 = np.array([
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 1, 1, 1, 0],
+            [0, 0, 0, 0, 1, 1, 1, 1, 1, 0],
+            [0, 0, 0, 0, 1, 1, 1, 1, 1, 0],
+            [0, 0, 0, 0, 1, 1, 1, 1, 1, 0],
+            [0, 0, 0, 0, 1, 1, 1, 1, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], dtype=np.uint64)
+
+        self.arr3 = np.array([
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], dtype=np.uint64)
+
+    def testAreaDisjFraction(self):
+        self.assertEqual(
+            iptools.areaDisjFraction(self.arr1, dablabels=self.arr2),
+            25. / (25. + 25. - 9.))
+
+    def testAreaDisjFraction2(self):
+        self.assertEqual(
+            iptools.areaDisjFraction(self.arr3, dablabels=self.arr1), 1.)
+
+    def testAreaDisjFraction3(self):
+        self.assertEqual(
+            iptools.areaDisjFraction(self.arr3, dablabels=self.arr3), 0.)
 
 if __name__ == "__main__":
     unittest.main()
