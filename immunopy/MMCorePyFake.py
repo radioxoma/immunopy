@@ -125,7 +125,8 @@ class MainWindow(threading.Thread):
         print('Image: %s' % [w.get(int(i)) for i in w.curselection()])
         if w.size() > 0:
 #             return self.image_list[w.curselection()[0]]
-            self.mmc.set_image(self.image_list[w.curselection()[0]])
+            # int() here for Windows
+            self.mmc.set_image(self.image_list[int(w.curselection()[0])])
         else:
             return None
 
