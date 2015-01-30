@@ -98,6 +98,7 @@ class MicroscopeControl(QtGui.QGroupBox):
     willRunOnce = QtCore.Signal()
     willRunContinuously = QtCore.Signal()
     willStop = QtCore.Signal()
+    needAutoWb = QtCore.Signal()
 
     def __init__(self, parent=None):
         super(MicroscopeControl, self).__init__(parent)
@@ -162,16 +163,19 @@ class MicroscopeControl(QtGui.QGroupBox):
         self.in_vbox.addWidget(self.histview)
 
         self.horizontal.addWidget(QtGui.QLabel('R'))
-        self.sbx_adjust_r = QtGui.QSpinBox()
-        self.sbx_adjust_r.setRange(-254, 255)
+        self.sbx_adjust_r = QtGui.QDoubleSpinBox()
+        self.sbx_adjust_r.setSingleStep(0.01)
+        self.sbx_adjust_r.setRange(-2.0, 2.0)
         self.horizontal.addWidget(self.sbx_adjust_r)
         self.horizontal.addWidget(QtGui.QLabel('G'))
-        self.sbx_adjust_g = QtGui.QSpinBox()
-        self.sbx_adjust_g.setRange(-254, 255)
+        self.sbx_adjust_g = QtGui.QDoubleSpinBox()
+        self.sbx_adjust_g.setSingleStep(0.01)
+        self.sbx_adjust_g.setRange(-2.0, 2.0)
         self.horizontal.addWidget(self.sbx_adjust_g)
         self.horizontal.addWidget(QtGui.QLabel('B'))
-        self.sbx_adjust_b = QtGui.QSpinBox()
-        self.sbx_adjust_b.setRange(-254, 255)
+        self.sbx_adjust_b = QtGui.QDoubleSpinBox()
+        self.sbx_adjust_b.setSingleStep(0.01)
+        self.sbx_adjust_b.setRange(-2.0, 2.0)
         self.horizontal.addWidget(self.sbx_adjust_b)
         self.btn_autowb = QtGui.QPushButton('Auto')
         self.btn_autowb.setToolTip(
@@ -183,6 +187,8 @@ class MicroscopeControl(QtGui.QGroupBox):
         self.btn_resetwb.setStyleSheet("padding: 3px;")
         self.btn_resetwb.clicked.connect(self.resetWbControls)
         self.horizontal.addWidget(self.btn_resetwb)
+        self.btn_autowb.clicked.connect(self.autowb)
+        self.updateWbControls()
 
         self.willRunOnce.connect(self.parent.VProc.runOnce)
         self.willRunContinuously.connect(self.parent.VProc.runContinuous)
@@ -229,13 +235,18 @@ class MicroscopeControl(QtGui.QGroupBox):
         self.sbx_adjust_r.setValue(r)
         self.sbx_adjust_g.setValue(g)
         self.sbx_adjust_b.setValue(b)
-    
+
     def resetWbControls(self):
-        self.sbx_adjust_r.setValue(0)
-        self.sbx_adjust_g.setValue(0)
-        self.sbx_adjust_b.setValue(0)
-        
-        
+        self.sbx_adjust_r.setValue(1.0)
+        self.sbx_adjust_g.setValue(1.0)
+        self.sbx_adjust_b.setValue(1.0)
+        self.btn_autowb.setEnabled(True)
+    
+    def autowb(self):
+        self.btn_autowb.setEnabled(False)
+        self.needAutoWb.emit()
+
+
 class AnalysisControl(QtGui.QGroupBox):
     """Control image analysis workflow.
 
@@ -464,7 +475,7 @@ class VideoProcessor(QtCore.QObject):
         self.__model = statdata.StatDataModel()
         self.rgb32 = None
         self.rgb = None
-        self._wb_shift = [0, 0, 0]  # RGB white balance
+        self._wb_gain = [1.0, 1.0, 1.0]
         self.out = None
 
         self.workTimer = QtCore.QTimer(parent=self)
@@ -475,14 +486,14 @@ class VideoProcessor(QtCore.QObject):
 
     @QtCore.Slot()
     def set_white_point(self):
-        rgb_shift = self.HPlotter.get_white_point()
-        if rgb_shift is not None:
-            self._wb_shift[1:] = rgb_shift[1:]
+        rgb_gain = self.HPlotter.get_wp_gain(normalize=False)
+        if rgb_gain is not None:
+            self._wb_gain = rgb_gain
             self.newwhitepoint.emit()
 
     @QtCore.Slot()
     def get_white_point(self):
-        return self._wb_shift
+        return self._wb_gain
 
     @QtCore.Slot()
     def process_frame(self):
@@ -499,8 +510,9 @@ class VideoProcessor(QtCore.QObject):
                 else:
                     print('No frame')
             if self.rgb32 is not None:
-                self.rgb = iptools.rgb32asrgb(self.rgb32)
-                iptools.correct_wb(self.rgb, self._wb_shift)
+                rgb = iptools.rgb32asrgb(self.rgb32)
+                # WB correction before histogram calculation
+                self.rgb = iptools.correct_wb(rgb, self._wb_gain)
                 self.hist = self.HPlotter.plot(self.rgb)
                 self.histogramready.emit()
                 self.out = self.CProcessor.process(self.rgb)
@@ -580,15 +592,15 @@ class VideoProcessor(QtCore.QObject):
 
     @QtCore.Slot()
     def setRShift(self, value):
-        self._wb_shift[0] = value
+        self._wb_gain[0] = value
 
     @QtCore.Slot()
     def setGShift(self, value):
-        self._wb_shift[1] = value
+        self._wb_gain[1] = value
 
     @QtCore.Slot()
     def setBShift(self, value):
-        self._wb_shift[2] = value
+        self._wb_gain[2] = value
 
 
 if __name__ == '__main__':

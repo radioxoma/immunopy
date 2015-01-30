@@ -71,7 +71,7 @@ class MainWindow(QtGui.QMainWindow):
         self.MControl.sbx_adjust_r.valueChanged.connect(self.VProc.setRShift)
         self.MControl.sbx_adjust_g.valueChanged.connect(self.VProc.setGShift)
         self.MControl.sbx_adjust_b.valueChanged.connect(self.VProc.setBShift)
-        self.MControl.btn_autowb.clicked.connect(self.VProc.set_white_point)
+        self.MControl.needAutoWb.connect(self.VProc.set_white_point)
         self.VProc.newwhitepoint.connect(self.MControl.updateWbControls)
 
         self.AControl.vtype.currentIndexChanged.connect(self.VProc.setVtype)

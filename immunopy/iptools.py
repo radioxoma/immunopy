@@ -160,10 +160,10 @@ class HistogramPlotter(object):
                 bgra[self.height-c:,k,2] = 255.
                 bgra[self.height-c:,k,3] = 150.
         return bgra
-    
-    def get_white_point(self):
+
+    def get_wp_shift(self):
         """Return red, green and blue channels shifts to produce white color.
-        
+
         Red is always zero, because microscope halogen lamp is reddish (red
         channel always dominates), so we need to increase other channel
         contribution for getting pure white.
@@ -174,7 +174,29 @@ class HistogramPlotter(object):
             r = np.argmax(self.histr)
             g = np.argmax(self.histg)
             b = np.argmax(self.histb)
-            return [0, r-g, r-b]
+            return [0, r - g, r - b]
+
+    def get_wp_gain(self, normalize=False):
+        """Return gain suitable for white-balancing of RGB image.
+
+        Take image of light source and return gain, multiplying by which the
+        image become white.
+
+        :param bool normalize: If True, RGB array multiplying by returned
+            gain tends to fit in 0-255 range. Otherwise you should consider
+            normalizing of RGB itself.
+        :return: R, G, B gain values for RGB image color correcting.
+        :rtype:
+            array float32
+        """
+        if self.histr is not None:
+            r = np.argmax(self.histr)
+            g = np.argmax(self.histg)
+            b = np.argmax(self.histb)
+            gain = 255.0 / np.array((r, g, b), dtype=np.float32)
+            if normalize:
+                gain /= gain.max()
+            return gain
 
 
 class CellProcessor(object):
@@ -439,25 +461,34 @@ def setMmcResolution(mmc, width, height):
     mmc.setROI(x, y, width, height)
 
 
-def correct_wb(rgb, rgb_shift):
-    """Correct white balance inplace.
+def correct_wb(img, gain):
+    """Correct white balance basing on known white pixel in this image.
+
+    https://en.wikipedia.org/wiki/Color_balance
+
+    Viggiano, J A Stephen, "Comparison of the accuracy of different white
+    balancing algorithms as quantified by their color constancy"
+
+    :param array img:
+    :param array gain: RGB gains array.
+    :return: Array values will be in range 0-255.
+    :rtype: array uint8
     """
-    # Numpy does not provide saturated inplace math
-    if rgb_shift[0] != 0:
-        rgb[...,0] = cv2.add(rgb[...,0], rgb_shift[0])
-    if rgb_shift[1] != 0:
-        rgb[...,1] = cv2.add(rgb[...,1], rgb_shift[1])
-    if rgb_shift[2] != 0:
-        rgb[...,2] = cv2.add(rgb[...,2], rgb_shift[2])
+    rgb = img.astype(dtype=np.float32, copy=True)
+    rgb *= gain
+    rgb /= (rgb.max() / 255.0)
+    return rgb.astype(np.uint8)
 
 
 def normalize(img):
-    """G. Landini proposal.
-    http://imagejdocu.tudor.lu/doku.php?id=howto:working:how_to_correct_background_illumination_in_brightfield_microscopy
+    """G. Landini proposal [1]
+    
+    [1] http://imagejdocu.tudor.lu/doku.php?id=howto:working:how_to_correct_background_illumination_in_brightfield_microscopy
     corrected = (Specimen - Darkfield) / (Brightfield - Darkfield) * 255
     """
-    immin = img.min()
-    return (img - immin) / (img.max() - immin).astype(np.float32)
+    dark = float(img.min())  # Here performance start suffer
+    out = (img - dark) / (img.max() - dark)
+    return out
 
 
 def rescale(source, scale):
