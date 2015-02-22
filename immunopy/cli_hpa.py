@@ -7,7 +7,7 @@ Created on 2014-11-02
 @author: Eugene Dvoretsky
 """
 
-__description__ = "Images batch processing with Immunopy"
+__description__ = "Human protein atlas images batch processing with Immunopy"
 __author__ = "Eugene Dvoretsky"
 
 

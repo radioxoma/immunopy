@@ -7,7 +7,7 @@ Created on 2014-11-16
 @author: Eugene Dvoretsky
 """
 
-__description__ = "Wrapper around Immunopy cli interface"
+__description__ = "Wrapper around Immunopy cli_hpa interface"
 __author__ = "Eugene Dvoretsky"
 
 
@@ -36,7 +36,7 @@ def main(args):
         dab_shift = int(row[col_idx['DAB shift']])
         hem_shift = int(row[col_idx['HEM shift']])
         fileout = os.path.join(args.out, protein_name + "_d%d-h%d.csv" % (dab_shift, hem_shift))
-        shstr = "python2 cli.py %s %f --dab-shift %d --hem-shift %d --mp-disable --quiet --out %s" % (
+        shstr = "python2 cli_hpa.py %s %f --dab-shift %d --hem-shift %d --mp-disable --quiet --out %s" % (
             args.file, args.scale, dab_shift, hem_shift, fileout)
         commands.append(shstr)
     print(commands)

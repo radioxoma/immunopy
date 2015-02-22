@@ -211,18 +211,18 @@ class CellProcessor(object):
     def __init__(self, scale, colormap, mp=False):
         super(CellProcessor, self).__init__()
         self.white_balance_shift = [0, 0, 0]  # RGB colors shift
-        self.th_dab_shift = -15.0
-        self.th_hem_shift = 0
-        self.min_size = 60
+        self.th_dab_shift = -18.0
+        self.th_hem_shift = -25.0
+        self.min_size = 10
         self.max_size = 9999999 # 3000 temporary disabled
         self.vtypes = (
-            'Video', 'Video adaptive',
+            'Video',
             'DAB stain', 'DAB mask',
             'HEM stain', 'HEM mask',
             'Overlay', 'DAB cells', 'HEM cells')
         self.vtype = self.vtypes[0]  # Default item e.g. for combobox
 
-        self.peak_distance = 8
+        self.peak_distance = 5
         self.scale = scale
         self.blur = 2
         self.colormap = colormap
@@ -392,7 +392,7 @@ def worker(stain, threshold_shift, peak_distance, min_size, max_size):
     Return filtered objects and their count.
     Would not work with processes as class method.
     """
-    stth = threshold_isodata(stain, shift=threshold_shift)
+    stth = threshold_yen(stain, shift=threshold_shift)
     stmask = stain < stth
     stmed = ndimage.filters.median_filter(stmask, size=2)
     stedt = cv2.distanceTransform(
