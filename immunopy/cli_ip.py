@@ -38,12 +38,11 @@ def parse_name(filename):
 def main():
     parser = argparse.ArgumentParser(description=__description__)
     parser.add_argument("rated", help="Directory with images 20150126-145740[35].tif.jpg")
-    parser.add_argument("scale", type=float, help="Image scale in um/px")
+#     parser.add_argument("scale", type=float, help="Image scale in um/px")
     parser.add_argument("-o", "--out", help="Output CSV file")
     parser.add_argument("--dab-shift", type=int, help="DAB threshold shift")
     parser.add_argument("--hem-shift", type=int, help="HEM threshold shift")
     parser.add_argument("--mp-disable", dest='mp', action='store_false', help="Disable multiprocessing")
-    parser.add_argument("--dry-run", action='store_true', help="Do not process anything")
     args = parser.parse_args()
 
     # header = ["Assay ID", "Human labeling index"]
@@ -61,6 +60,8 @@ def main():
     if args.hem_shift is not None:
         CProcessor.th_hem_shift = args.hem_shift
     print("DAB shift {}, HEM shift {}".format(CProcessor.th_dab_shift, CProcessor.th_hem_shift))
+    print("Current scale {}".format(CProcessor.scale))
+    print("Min size {}".format(CProcessor.min_size))
 
     assay_list = list()
     for filename in filter(lambda x: x.endswith('.tif') and '[' in x, sorted(os.listdir(args.rated))):
@@ -77,9 +78,10 @@ def main():
     for num, row in enumerate(assay_list):
         image_name = row[col_idx['Assay ID']]
         print("[{}/{:2.0f} - {:3.0f} %] '{}'").format(num, total_num, num / total_num * 100, image_name)
-        if not args.dry_run:
-            CProcessor.process(misc.imread(os.path.join(args.rated, image_name)))
-            assay_stat = CProcessor.take_assay()
+        rgb = misc.imread(os.path.join(args.rated, image_name))
+        corrected = iptools.correct_wb(rgb, [1, 1, 1])
+        CProcessor.process(corrected)
+        assay_stat = CProcessor.take_assay()
         assay_list[num].extend([assay_stat.dab_cell_count, assay_stat.hem_cell_count, assay_stat.dab_dabhemfraction])
 
     if args.out:
