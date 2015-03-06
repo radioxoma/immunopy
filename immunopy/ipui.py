@@ -241,7 +241,7 @@ class MicroscopeControl(QtGui.QGroupBox):
         self.sbx_adjust_g.setValue(1.0)
         self.sbx_adjust_b.setValue(1.0)
         self.btn_autowb.setEnabled(True)
-    
+
     def autowb(self):
         self.btn_autowb.setEnabled(False)
         self.needAutoWb.emit()
@@ -378,7 +378,7 @@ class GLFrame(QtOpenGL.QGLWidget):
         else:
             raise ValueError("{} dtype is not supported, "
                 "use uint8 or float32 instead".format(array.dtype))
- 
+
         # Prepare an empty texture
         self._texture_id = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, self._texture_id)
@@ -418,14 +418,14 @@ class VideoWidget(QtGui.QWidget):
         self.vbox = QtGui.QVBoxLayout()
         self.setLayout(self.vbox)
         self.bar = QtGui.QToolBar('ToolBar')
- 
+
         self.scrollableView = QtGui.QScrollArea()
         self.glWidget = GLFrame()
         self.glWidget.setSizePolicy(QtGui.QSizePolicy.Ignored, QtGui.QSizePolicy.Ignored)
         self.scrollableView.setWidget(self.glWidget)
         self.vbox.addWidget(self.bar)
         self.vbox.addWidget(self.scrollableView)
-        
+
         self.frameResNatural = self.bar.addAction('1:1', self.resNatural)
 #         self.frameResPlus = self.bar.addAction('+', self.resPlus)
 #         self.frameResMinus = self.bar.addAction(u'−', self.resMinus)
@@ -489,6 +489,7 @@ class VideoProcessor(QtCore.QObject):
         rgb_gain = self.HPlotter.get_wp_gain(normalize=False)
         if rgb_gain is not None:
             self._wb_gain = rgb_gain
+            print("New white point: {}".format(str(self._wb_gain)))
             self.newwhitepoint.emit()
 
     @QtCore.Slot()
@@ -559,7 +560,7 @@ class VideoProcessor(QtCore.QObject):
         self.workTimer.stop()
         self.mmc.stopSequenceAcquisition()
         print('Video acquisition terminated.')
-    
+
     @QtCore.Slot()
     def setVtype(self, value):
         print(value)
