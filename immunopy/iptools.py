@@ -27,8 +27,10 @@ from stain import vector
 try:
     from stain import cdeconvcl
     cdeconv = cdeconvcl.ColorDeconvolution()
+    print("Using OpenCL for color deconvolution")
 except ImportError:
     from stain import cdeconv
+    print("Using CPU (slow) for color deconvolution")
 
 
 class CalibMicro(QtCore.QObject):
