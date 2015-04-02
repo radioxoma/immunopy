@@ -12,7 +12,7 @@ import sys
 import unittest
 
 curdir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, curdir + '/../immunopy')
+sys.path.insert(0, os.path.join(curdir, '/../immunopy'))
 
 import numpy as np
 from scipy import misc
