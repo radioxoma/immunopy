@@ -14,12 +14,12 @@ from scipy import misc
 from PySide import QtGui
 
 curdir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, curdir + '/../immunopy')
+sys.path.insert(0, os.path.join(curdir, '/../immunopy'))
 
-from ipui import GLFrame
+from immunopy.ipui import GLFrame
 
 
-img = misc.imread('../immunopy/image/hdab256.tif')
+img = misc.imread(os.path.join(curdir, '../immunopy/image/hdab256.tif'))
 
 cycles = 100
 counter = 0

@@ -132,25 +132,30 @@ class MainWindow(QtGui.QMainWindow):
         event.accept()
 
 
-if __name__ == '__main__':
+def main():
     app = QtGui.QApplication(sys.argv)
     splash = QtGui.QSplashScreen(QtGui.QPixmap("image/slide.png"),
         QtCore.Qt.WindowStaysOnTopHint)
     splash.show()
     splash.showMessage("Loading statistics module...", color=QtCore.Qt.gray)
     app.processEvents()
+    global statdata
     import statdata
     splash.showMessage("Loading imaging toolset...", color=QtCore.Qt.gray)
     app.processEvents()
+    global ipui
     import ipui
+    global iptools
     import iptools
     splash.showMessage("Loading Micro-manager...", color=QtCore.Qt.gray)
     app.processEvents()
+    global mmanager
     import mmanager
     module_dir = os.path.dirname(__file__)
+    global MM_CONFIGURATION_NAME
+    global MMCorePy
     if FAKE_CAMERA:
         import MMCorePyFake as MMCorePy
-        import iptools
         MM_CONFIGURATION_NAME = os.path.join(module_dir, "camera_demo.cfg")
     else:
         import MMCorePy
@@ -159,3 +164,7 @@ if __name__ == '__main__':
     window.show()
     splash.finish(window)
     app.exec_()
+
+
+if __name__ == '__main__':
+    main()

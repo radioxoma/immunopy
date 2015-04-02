@@ -18,7 +18,7 @@ import numpy as np
 from scipy import misc
 from skimage import color
 from skimage import filter as filters
-import iptools
+from immunopy import iptools
 
 
 class Test(unittest.TestCase):

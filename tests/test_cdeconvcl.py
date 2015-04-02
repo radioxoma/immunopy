@@ -12,8 +12,8 @@ sys.path.insert(0, os.path.join(curdir, '/../immunopy'))
 import numpy as np
 from skimage import color
 from skimage.util import dtype
-from stain import cdeconvcl
-from stain import cdeconv
+from immunopy.stain import cdeconvcl
+from immunopy.stain import cdeconv
 
 
 class TestGEMM(unittest.TestCase):
