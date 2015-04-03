@@ -1,33 +1,23 @@
 # Immunopy #
 
-## Краткий обзор ##
-Immunopy - программа с графическим интерфейсом, позволяющая оценивать индекс позитивных ядер (англ. *labeleing index*) в реальном времени.
+*Immunopy — realtime immunostain analysis application.*
 
-Приложение захватывает видеопоток с камеры микроскопа и проводит анализ полей зрения синхронно с патоморфологом, мгновенно отображая labeleing index для текущего поля зрения. Приложение ориентировано на препараты молочной железы (красители DAB / гематоксилин).
+The program acquires microscope camera video stream and performs realtime image analysis of current field of view. With color labels and statistics (labeling index, cell count), showing as video overlay, pathologist can observe assay in *augmented* way. This short [video](https://www.youtube.com/watch?v=d-7YBjyk-rw) with algorithm demonstration helps understand the concept.
 
-## Зависимости ##
+Immunopy targeted to breast cancer immunohistochemical assays with nuclear markers (Ki-67, estrogen and progesterone receptors stained with DAB & hematoxylin).
 
-* Python 2.7
-* Numpy
-* Scipy
-* Scikits-image
-* Pillow
-* OpenCV 2.4.10 (<3.0)
-* Micromanager 1.4.18 (мои патчи для BaumerOptronic)
-* PyQt или PySide
-* PyOpenGL
-* PyOpenCL
+## Installation ##
+Immunopy is written in python 2. Dependences that not supported by [pip](https://pip.pypa.io) is listed in `setup.py` file near with "install_requires" section.
 
-## Конфигурация ##
+    python2 setup.py install
 
-Современные автоматизированные (моторизованные) микроскопы могут оснащаться подвижным предметным столиком, турелью объективов с автофокусом, различными источниками света и камерой с затвором. Разумеется, перед использованием такой сложной системы, её необходимо сконфигурировать, а объективы откалибровать.
 
-> TIP. Размеры пикселов для разных объективов были найдены в файлах метаинформации, генерируемых Leica Application Suite и были проверены экспериментально объектом-микрометром.
+## Configuration ##
 
-Для управления всеми устройствами используется Micromanager. Файл конфигурации для микроскопа (например MMConfig.cfg) создаётся в MMStudio (Micromanager GUI) до запуска Immunopy. В нём задаётся список используемых устройств микроскопа и настройки (в том числе пресеты), которые будут применены к микроскопу после запуска Immunopy. Конфигурирование описано в [документации Miсromanager](https://micro-manager.org/wiki/Micro-Manager_Configuration_Guide), вы должны создать группу *System* с пресетом *Startup*.
+Image acquisition lies on [Micro-manager](https://www.micro-manager.org). You need to create [configuration file](https://micro-manager.org/wiki/Micro-Manager_Configuration_Guide) (e.g. `camera_demo.cfg`) with group *"System"* and preset *"Startup"*. This device configuration will be loaded as default on startup, also some camera settings can be changed during work.
 
-Immunopy позволяет изменять некоторые параметры в процессе работы. Например, настройки камеры: экспозиция, gain, выбор используемого объектива.
+It's necessary to calibrate microscope and define pixel size for used magnifications.
 
-> NB! В связи с тем, что не все микроскопы имеют автоматическую *objective turette*, о которой может знать Micromanager, вы должны следить за тем, чтобы выбранное в интерфейсе Immunopy увеличение соответствовало объективу, который используете (анализатор должен знать масштаб изображения).
 
-Ручной настройки анализатора не требуется (параметры по умолчанию подобраны экспериментально и удовлетворительны). Этот тип настроек не зависит от оборудования и обрабатывается средствами Qt так, как того требует операционная система.
+## Backgroud ##
+This project is my thesis work in [Vitebsk state medical university](http://www.vsmu.by), originally called "Автоматическая оценка иммуногистохимических препаратов в режиме реального времени".
