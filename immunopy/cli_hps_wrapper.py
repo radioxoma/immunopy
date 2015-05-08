@@ -7,6 +7,10 @@ Created on 2014-11-16
 @author: Eugene Dvoretsky
 """
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 __description__ = "Wrapper around Immunopy cli_hpa interface"
 __author__ = "Eugene Dvoretsky"
 
@@ -30,7 +34,7 @@ def main(args):
         col_idx = dict(itertools.izip(header, xrange(len(header))))
         # Now we can get a column index by name: `col_idx['Age']`
         settings_list = [row for row in reader]
-    
+
     commands = list()
     for row in settings_list:
         dab_shift = int(row[col_idx['DAB shift']])
@@ -45,7 +49,7 @@ def main(args):
         print("Let's play! %d" % i)
         if returncode != 0:
             print("%d command failed: %d" % (i, returncode))
-    
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__description__)

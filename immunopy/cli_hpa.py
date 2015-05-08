@@ -7,6 +7,10 @@ Created on 2014-11-02
 @author: Eugene Dvoretsky
 """
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 __description__ = "Human protein atlas images batch processing with Immunopy"
 __author__ = "Eugene Dvoretsky"
 
@@ -15,9 +19,10 @@ import os
 import argparse
 import csv
 import itertools
-from scipy import misc 
-import iptools
-import lut
+from scipy import misc
+
+from . import iptools
+from . import lut
 
 
 def main(args):
@@ -25,7 +30,7 @@ def main(args):
     """
     csv_dir = os.path.dirname(args.file)
     protein_name = os.path.splitext(os.path.basename(args.file))[0]
-    
+
     with open(args.file, 'rb') as f:
         reader = csv.reader(f, delimiter=';')
         header = reader.next()
@@ -35,7 +40,7 @@ def main(args):
 
     CMicro = iptools.CalibMicro(scale=args.scale)  # px/um
     CProcessor = iptools.CellProcessor(
-        scale=CMicro.scale, colormap=lut.random_jet(), mp=args.mp)    
+        scale=CMicro.scale, colormap=lut.random_jet(), mp=args.mp)
     if args.dab_shift is not None:
         CProcessor.th_dab_shift = args.dab_shift
     if args.hem_shift is not None:

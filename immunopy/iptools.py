@@ -9,6 +9,10 @@ Created on 2014-01-16
 Immunopy image processing core.
 """
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import warnings
 from multiprocessing import Pool
 import numpy as np
@@ -21,15 +25,16 @@ from skimage import color
 from skimage import exposure
 import cv2
 from PySide import QtCore
-import lut
-import statdata
-from stain import vector
+
+from . import lut
+from . import statdata
+from .stain import vector
 try:
-    from stain import cdeconvcl
+    from .stain import cdeconvcl
     cdeconv = cdeconvcl.ColorDeconvolution()
     print("Using OpenCL for color deconvolution")
 except ImportError:
-    from stain import cdeconv
+    from .stain import cdeconv
     print("Using CPU (slow) for color deconvolution")
 
 
@@ -87,7 +92,7 @@ class CalibMicro(QtCore.QObject):
     @scalename.setter
     def scalename(self, value):
         """Set microscope objective scale by available scalename."""
-        assert(isinstance(value, str))
+        # assert(isinstance(value, str))
         if value not in self.__scales:
             raise ValueError("Unknown microscope objective name")
         self.__curr_scale = self.__scales[value]
@@ -252,8 +257,8 @@ class CellProcessor(object):
     def scale(self, value):
         assert(isinstance(value, float))
         self.__scale = value
-        print('Scale changed to %f um/px (%f px/um)') % (
-            self.__scale, 1.0 / self.__scale)
+        print('Scale changed to %f um/px (%f px/um)' % (
+            self.__scale, 1.0 / self.__scale))
 
     @property
     def vtype(self):
@@ -484,7 +489,7 @@ def correct_wb(img, gain):
 
 def normalize(img):
     """G. Landini proposal [1]
-    
+
     [1] http://imagejdocu.tudor.lu/doku.php?id=howto:working:how_to_correct_background_illumination_in_brightfield_microscopy
     corrected = (Specimen - Darkfield) / (Brightfield - Darkfield) * 255
     """

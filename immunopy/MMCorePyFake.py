@@ -5,7 +5,13 @@
 Created on 2014-05-28
 
 @author: Eugene Dvoretsky
+
+Fake image source.
 """
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import os
 import Tkinter as tk
@@ -33,7 +39,7 @@ class CMMCore(base):
         curdir = os.path.dirname(os.path.abspath(__file__))
         self.set_image(os.path.join(curdir, path))
         MainWindow(mmcore=self)
-        
+
     def getImageHeight(self):
         return self.frame.shape[0]
     def getImageWidth(self):
@@ -62,7 +68,7 @@ class CMMCore(base):
         self.frame = self.RGB32
     # If Micromanager isn't installed
     if not MM_INSTALLED:
-        print("BAD NEWS")
+        print("Micromanager isn't installed")
         def loadSystemConfiguration(self, config_name):
             pass
         def getCameraDevice(self):
@@ -143,7 +149,7 @@ class MainWindow(threading.Thread):
         self.root = tk.Tk()
         self.root.wm_attributes('-topmost', 1)
         self.root.protocol("WM_DELETE_WINDOW", self.root.quit)
-        
+
         self.root.title("Micromanager fake")
         self.label = ttk.Label(self.root, text="Which image should I return?")
         self.label.pack()

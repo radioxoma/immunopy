@@ -9,6 +9,10 @@ Created on 2014-05-16
 Immunopy GUI primitives.
 """
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import sys
 import time
 import numpy as np
@@ -17,9 +21,10 @@ from PySide import QtGui
 from PySide import QtOpenGL
 from OpenGL.GL import *
 from OpenGL import ERROR_ON_COPY
-import iptools
-import lut
-import statdata
+
+from . import iptools
+from . import lut
+from . import statdata
 
 ERROR_ON_COPY = True  # Raise exception on array copy or casting
 # http://pyopengl.sourceforge.net/documentation/opengl_diffs.html
@@ -520,7 +525,7 @@ class VideoProcessor(QtCore.QObject):
                 self.newframe.emit()
                 delta_time = time.time() - start_time
                 if delta_time != 0:
-                    print('FPS: %f') % (1. / (time.time() - start_time))
+                    print('FPS: %f' % (1. / (time.time() - start_time)))
 
     @QtCore.Slot()
     def runOnce(self):

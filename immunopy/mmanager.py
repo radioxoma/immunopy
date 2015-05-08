@@ -9,6 +9,10 @@ Created on 2014-07-03
 Qt-based Micromanager property browser.
 """
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 from PySide import QtCore
 from PySide import QtGui
 

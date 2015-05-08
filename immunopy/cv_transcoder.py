@@ -10,9 +10,14 @@ Analyze input video and render distinguished colored cells with statistic
 to another one.
 """
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import cv2
-import iptools
-import lut
+
+from . import iptools
+from . import lut
 
 
 MAGNIFICATION = '10'

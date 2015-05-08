@@ -9,11 +9,16 @@ Created on 2014-01-18
 Cell segmentation algorithm demo with simple opencv-based GUI.
 """
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import time
 import cv2
-import MMCorePyFake as MMCorePy
-import iptools
-import lut
+
+from . import MMCorePyFake as MMCorePy
+from . import iptools
+from . import lut
 
 
 MAGNIFICATION = '10'

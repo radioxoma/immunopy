@@ -9,6 +9,10 @@ Created on 2014-04-02
 Look Up Table generation and applying.
 """
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import numpy as np
 from matplotlib.pyplot import cm
 import cv2
@@ -50,15 +54,15 @@ def offset_sat(arr, offset):
 
 def offset(array, offset, undefined=0):
     """Shift all histogram bins of an uint8 array.
-    
+
     Add `offset` value (like +=) to all elements of `array`. Statistically it
     leads to all histogram bins shift. Emulates saturated math operations,
     except undefined values filled with `undefined` parameter value.
 
     offset : int, If > 0, bins will shift from right to left.
-    
+
     undefined: int, Default value for unknown values.
-    
+
     Examples:
     >>> arr = np.array([0, 1, 3, 4, 5, 252, 253, 254, 255], dtype=np.uint8)
     >>> offset(arr, offset=5, undefined=0)

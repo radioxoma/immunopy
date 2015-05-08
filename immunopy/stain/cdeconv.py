@@ -7,6 +7,10 @@ Created on 2014-12-20
 @author: radioxoma
 """
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import numpy as np
 from scipy import linalg
 from skimage.util import dtype

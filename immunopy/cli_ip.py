@@ -10,6 +10,10 @@ Created on 2015-02-14
 python2 cli_ip.py ~/analysis/Лесничая\ О.В./Immunopy/2015-01-26/2015-01-26_rescaled_analyzed/ ~/analysis/Лесничая\ О.В./Immunopy/2015-01-26/origin/flat/ 0.5 -o here.csv --dab-shift -30 --hem-shift -20
 """
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 __description__ = "Image batch processing utility."
 __author__ = "Eugene Dvoretsky"
 
@@ -19,8 +23,9 @@ import os
 import re
 import itertools
 from scipy import misc
-import iptools
-import lut
+
+from . import iptools
+from . import lut
 
 
 def parse_name(filename):

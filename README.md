@@ -19,5 +19,11 @@ Image acquisition lies on [Micro-manager](https://www.micro-manager.org). You ne
 It's necessary to calibrate microscope and define pixel size for used magnifications.
 
 
+## Running
+
+    cd immunopy
+    python2 -m immunopy.main
+
+
 ## Backgroud ##
 This project is my thesis work in [Vitebsk state medical university](http://www.vsmu.by), originally called "Автоматическая оценка иммуногистохимических препаратов в режиме реального времени".
