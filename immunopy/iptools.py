@@ -77,9 +77,9 @@ class CalibMicro(QtCore.QObject):
         """Set current scale in um/px."""
         if isinstance(value, str) and value in self.__scales:
             RuntimeWarning(
-                """There is objective name '%s' same as argument. Are you
-                really wanted to use 'scale' property?""" % \
-                self.__scales[value])
+                """There is objective name '{}' same as argument. Are you
+                really wanted to use 'scale' property?""".format(
+                self.__scales[value]))
         elif isinstance(value, float):
             self.__curr_scale = value
         else:
@@ -382,10 +382,10 @@ class CellProcessor(object):
             overlay = drawOverlay(scaled, dabfiltered, hemfiltered)
             dabcolored = lut.apply_lut(dabfiltered, self.colormap)
             hemcolored = lut.apply_lut(hemfiltered, self.colormap)
-            cv2.putText(scaled, 'Area disj fr. %.1f %%' % (self.st_dabdabhem_fraction), (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
+            cv2.putText(scaled, "Area disj fr. {:.1f} %".format(self.st_dabdabhem_fraction), (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
             cv2.putText(overlay, 'Colocalization', (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
-            cv2.putText(dabcolored, 'DAB %3.d objects' % self.st_dab_cell_count, (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
-            cv2.putText(hemcolored, 'HEM %3.d objects' % self.st_hem_cell_count, (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
+            cv2.putText(dabcolored, "DAB {:>3d} objects".format(self.st_dab_cell_count), (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
+            cv2.putText(hemcolored, "HEM {:>3d} objects".format(self.st_hem_cell_count), (12,65), cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 0), thickness=5)
             return montage(scaled, hemcolored, overlay, dabcolored)
 
         cv2.putText(overlay, 'Num D%3.d/H%3.d' % (self.st_dab_cell_count, self.st_hem_cell_count), (2,25), cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
