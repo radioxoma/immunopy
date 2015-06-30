@@ -1,0 +1,12 @@
+# PyDev
+*.settings
+*.project
+*.pydevproject
+
+immunopy/
+*.gz
+
+# makepkg generated stuff
+*.xz
+pkg/
+src/

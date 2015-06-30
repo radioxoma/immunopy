@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Name=Immunopy
+Comment=IHC image real time analyzer
+Exec=immunopy
+Terminal=false
+Type=Application
+Categories=Science;Biology;ImageProcessing;
